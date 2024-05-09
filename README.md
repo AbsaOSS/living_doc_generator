@@ -57,7 +57,6 @@ pip install -r requirements.txt
 ### Run unit test
 #### Launch unit tests
 ```
-cd tests
 pytest
 ```
 
