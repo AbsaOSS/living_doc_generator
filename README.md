@@ -29,24 +29,70 @@ Configure the action by customizing the following parameters based on your needs
 - **TODO** (required): TODO
 
 ## Setup
-### Build the Action:
-If you need to build the action locally:
+If you need to build the action locally, follow these steps:
 
-```bash
-TODO
+#### Prepare the Environment
+```
+node --version
+python3 --version
 ```
 
-TODO - check
-Then, commit action.yml and dist/index.js to your repository.
+#### Install Node.js Dependencies
+```
+npm install
+```
+
+#### Compile or Prepare the JavaScript Files
+```
+npm run build
+```
+
+#### Set Up Python Environment
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ### Run unit test
-TODO
-
-
-Launch unit tests.
+#### Launch unit tests
 ```
-pytest TODO
+cd tests
+pytest
 ```
+
+#### To run specific tests or get verbose output:
+```
+pytest -v  # Verbose mode
+pytest path/to/test_file.py  # Run specific test file
+```
+
+#### To check Test Coverage:
+```
+pytest --cov=../scripts
+```
+
+#### After running the tests
+```
+deactivate
+```
+
+#### Commit Changes
+After testing and ensuring that everything is functioning as expected, prepare your files for deployment:
+
+```
+git add action.yml dist/index.js  # Adjust paths as needed
+git commit -m "Prepare GitHub Action for deployment"
+git push
+```
+
+### Deployment
+This project uses GitHub Actions for deployment draft creation. The deployment process is semi-automated by a workflow defined in `.github/workflows/release_draft.yml`.
+
+- **Trigger the workflow**: The `release_draft.yml` workflow is triggered on workflow_dispatch.
+- **Create a new draft release**: The workflow creates a new draft release in the repository.
+- **Finalize the release draft**: Edit the draft release to add a title, description, and any other necessary details related to GitHub Action.
+- **Publish the release**: Once the draft is ready, publish the release to make it available to the public.
 
 
 ## Features

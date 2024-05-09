@@ -1,0 +1,13 @@
+name: 'Living Documentation Generator'
+description: 'Generates living documentation from current state of user defined GitHub repositories.'
+inputs:
+  input1:
+    description: 'Input description'
+    required: true
+    default: 'default value'
+outputs:
+  output1:
+    description: 'Output description'
+runs:
+  using: 'node12'
+  main: 'index.js'
