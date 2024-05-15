@@ -3,10 +3,22 @@ const core = require('@actions/core');
 
 async function run() {
     try {
-        const input1 = core.getInput('input1');
+        const githubToken = core.getInput('GITHUB_TOKEN');
+        const projectStateMining = core.getInput('project-state-mining');
+        const projectsTitleFilter = core.getInput('projects-title-filter');
+        const milestonesAsChapters = core.getInput('milestones-as-chapters');
+        const repositories = core.getInput('repositories');
+
+        // Construct the command with the provided inputs
+        const command = `python3 scripts/controller.py \
+            --github-token "${githubToken}" \
+            --project-state-mining "${projectStateMining}" \
+            --projects-title-filter "${projectsTitleFilter}" \
+            --milestones-as-chapters "${milestonesAsChapters}" \
+            --repositories '${repositories}'`;
 
         // Running the Python script with an input
-        exec(`python3 scripts/controller.py "${input1}"`, (error, stdout, stderr) => {
+        exec(command, (error, stdout, stderr) => {
             if (error) {
                 core.setFailed(`Execution error: ${error}`);
                 return;
@@ -16,7 +28,8 @@ async function run() {
                 return;
             }
             console.log(`Python script output: ${stdout}`);
-            core.setOutput("output1", stdout.trim());
+
+            core.setOutput("documentation-path", stdout.trim());
         });
     } catch (error) {
         core.setFailed(`Action failed with error ${error}`);

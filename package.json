@@ -16,7 +16,7 @@
     "ts-jest": "^29.1.2"
   },
   "scripts": {
-    "build": "ncc build scripts/generate-release-notes.js -o dist",
+    "build": "ncc build index.js -o dist",
     "test": "jest"
   },
   "jest": {
@@ -24,7 +24,7 @@
       "/node_modules/",
       "/dist/",
       "/.github/",
-      "/__tests__/mocks/"
+      "/tests"
     ]
   }
 }

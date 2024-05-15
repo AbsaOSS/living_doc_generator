@@ -1,13 +1,27 @@
 name: 'Living Documentation Generator'
 description: 'Generates living documentation from current state of user defined GitHub repositories.'
 inputs:
-  input1:
-    description: 'Input description'
+  GITHUB_TOKEN:
+    description: 'GitHub token for authentication.'
     required: true
-    default: 'default value'
+  repositories:
+    description: 'JSON string defining the repositories to be included in the documentation generation.'
+    required: true
+  project-state-mining:
+    description: 'Enable or disable mining of project state data.'
+    required: false
+    default: true
+  projects-title-filter:
+    description: 'Filter projects by titles. Provide a list of project titles.'
+    required: false
+    default: '[]'
+  milestones-as-chapters:
+    description: 'Treat milestones as chapters in the generated documentation.'
+    required: false
+    default: false
 outputs:
-  output1:
-    description: 'Output description'
+  documentation-path:
+    description: 'Path to the generated living documentation files'
 runs:
   using: 'node12'
   main: 'index.js'
