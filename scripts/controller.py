@@ -44,6 +44,7 @@ def run_script(script_name, env_vars):
 
 
 def main():
+    print("Extracting arguments from command line.")
     env_vars = extract_args()
 
     # Clean environment before mining
@@ -71,4 +72,6 @@ def main():
 
 
 if __name__ == '__main__':
+    print("Starting Living Documentation generation.")
     main()
+    print("Living Documentation generation completed.")
