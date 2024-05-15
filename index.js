@@ -1,3 +1,4 @@
+const path = require('path');
 const { exec } = require('child_process');
 const core = require('@actions/core');
 
