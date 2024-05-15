@@ -26825,8 +26825,11 @@ async function run() {
         const milestonesAsChapters = core.getInput('milestones-as-chapters');
         const repositories = core.getInput('repositories');
 
+        // Construct the path to the Python script relative to the built `dist` directory
+        const scriptPath = path.join(__dirname, '..', 'scripts', 'controller.py');
+
         // Construct the command with the provided inputs
-        const command = `python3 scripts/controller.py \
+        const command = `python3 ${scriptPath} \
             --github-token "${githubToken}" \
             --project-state-mining "${projectStateMining}" \
             --projects-title-filter "${projectsTitleFilter}" \
