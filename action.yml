@@ -24,4 +24,4 @@ outputs:
     description: 'Path to the generated living documentation files'
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
