@@ -104,10 +104,6 @@ TODO - project states scan for Features
 We welcome contributions to the Living Documentation Generator! Whether you're fixing bugs, improving documentation, or proposing new features, your help is appreciated.
 
 #### How to Contribute
-- **Submit Pull Requests**: Feel free to fork the repository, make changes, and submit a pull request. Please ensure your code adheres to the existing style and all tests pass.
-- **Report Issues**: If you encounter any bugs or issues, please report them via the repository's [Issues page](https://github.com/AbsaOSS/living-doc-generator/issues).
-- **Suggest Enhancements**: Have ideas on how to make this action better? Open an issue to suggest enhancements.
-
 Before contributing, please review our [contribution guidelines](https://github.com/AbsaOSS/living-doc-generator/blob/master/CONTRIBUTING.md) for more detailed information.
 
 ### License Information
