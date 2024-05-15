@@ -23,6 +23,10 @@ async function run() {
         // Running the Python script with an input
         exec(command, (error, stdout, stderr) => {
             if (error) {
+                console.error(`Error executing script: ${error.message}`);
+                console.error(`Error code: ${error.code}`);
+                console.error(`Error signal: ${error.signal}`);
+                console.error(`Error stack: ${error.stack}`);
                 core.setFailed(`Execution error: ${error}`);
                 return;
             }
