@@ -14,7 +14,7 @@ import json
 import re
 import os
 from typing import Set, List
-from lib.utils import parse_arguments, ensure_folder_exists, save_state_to_json_file
+from src.utils import ensure_folder_exists, save_state_to_json_file
 
 OUTPUT_DIRECTORY = "data/fetched_data/feature_data"
 

@@ -26827,7 +26827,7 @@ async function run() {
         const repositories = core.getInput('repositories');
 
         // Construct the path to the Python script relative to the built `dist` directory
-        const scriptPath = path.join(__dirname, '..', 'scripts', 'controller.py');
+        const scriptPath = __nccwpck_require__.ab + "controller.py";
 
         // Construct the command with the provided inputs
         const command = `python3 ${scriptPath} \
