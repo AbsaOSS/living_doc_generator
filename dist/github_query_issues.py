@@ -188,6 +188,8 @@ def process_issues(issues: List[dict], org_name: str, repo_name: str) -> List[di
 
 
 if __name__ == "__main__":
+    print("Downloading issues from GitHub started")
+
     # Get environment variables set by the controller script
     user_token = os.getenv('GITHUB_TOKEN')
     repositories = os.getenv('REPOSITORIES')
@@ -223,3 +225,6 @@ if __name__ == "__main__":
         # Save issues from one repository to the unique JSON file
         output_file_name = save_state_to_json_file(issue_list, "feature", OUTPUT_DIRECTORY, repo_name)
         print(f"Saved {len(issue_list)} issues to {output_file_name}.")
+
+    print("Downloading issues from GitHub ended")
+
