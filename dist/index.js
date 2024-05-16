@@ -26839,20 +26839,19 @@ async function run() {
 
         // Running the Python script with an input
         exec(command, (error, stdout, stderr) => {
+            core.info(`Python script output: ${stdout}`);
+
             if (error) {
                 core.error(`Error executing script: ${error.message}`)
                 core.error(`Error code: ${error.code}`);
                 core.error(`Error signal: ${error.signal}`);
                 core.error(`Error stack: ${error.stack}`);
 
-                core.setFailed(`Execution error: ${error}`);
-                return;
+                core.setFailed(`Execution error.`);
             }
             if (stderr) {
                 core.setFailed(`Execution stderr: ${stderr}`);
-                return;
             }
-            console.log(`Python script output: ${stdout}`);
 
             core.setOutput("documentation-path", stdout.trim());
         });
