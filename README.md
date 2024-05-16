@@ -44,19 +44,19 @@ See the default action step definition:
   with:
     repositories: '[
       {
-        "org-name": "fin-services",
-        "repo-name": "investment-app",
-        "query-labels": ["feature", "enhancement"]
+        "orgName": "fin-services",
+        "repoName": "investment-app",
+        "queryLabels": ["feature", "enhancement"]
       },
       {
-        "org-name": "health-analytics",
-        "repo-name": "patient-data-analysis",
-        "query-labels": ["functionality"]
+        "orgName": "health-analytics",
+        "repoName": "patient-data-analysis",
+        "queryLabels": ["functionality"]
       },
       {
-        "org-name": "open-source-initiative",
-        "repo-name": "community-driven-project",
-        "query-labels": ["improvement"]
+        "orgName": "open-source-initiative",
+        "repoName": "community-driven-project",
+        "queryLabels": ["improvement"]
       }
     ]'
   ```
@@ -82,19 +82,19 @@ See the full example of action step definition (in example are used non-default 
     # inputs
     repositories: '[
       {
-        "org-name": "fin-services",
-        "repo-name": "investment-app",
-        "query-labels": ["feature", "enhancement"]
+        "orgName": "fin-services",
+        "repoName": "investment-app",
+        "queryLabels": ["feature", "enhancement"]
       },
       {
-        "org-name": "health-analytics",
-        "repo-name": "patient-data-analysis",
-        "query-labels": ["functionality"]
+        "orgName": "health-analytics",
+        "repoName": "patient-data-analysis",
+        "queryLabels": ["functionality"]
       },
       {
-        "org-name": "open-source-initiative",
-        "repo-name": "community-driven-project",
-        "query-labels": ["improvement"]
+        "orgName": "open-source-initiative",
+        "repoName": "community-driven-project",
+        "queryLabels": ["improvement"]
       }
     ]'
 ```
@@ -123,19 +123,19 @@ Configure the action by customizing the following parameters based on your needs
     with:
       repositories: '[
         {
-          "org-name": "fin-services",
-          "repo-name": "investment-app",
-          "query-labels": ["feature", "enhancement"]
+          "orgName": "fin-services",
+          "repoName": "investment-app",
+          "queryLabels": ["feature", "enhancement"]
         },
         {
-          "org-name": "health-analytics",
-          "repo-name": "patient-data-analysis",
-          "query-labels": ["functionality"]
+          "orgName": "health-analytics",
+          "repoName": "patient-data-analysis",
+          "queryLabels": ["functionality"]
         },
         {
-          "org-name": "open-source-initiative",
-          "repo-name": "community-driven-project",
-          "query-labels": ["improvement"]
+          "orgName": "open-source-initiative",
+          "repoName": "community-driven-project",
+          "queryLabels": ["improvement"]
         }
       ]'
     ```

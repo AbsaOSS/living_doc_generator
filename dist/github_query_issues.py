@@ -210,9 +210,9 @@ if __name__ == "__main__":
 
     # Run the function for every repository in the config file
     for repo in repositories:
-        org_name = repo["org-name"]
-        repo_name = repo["repo-name"]
-        query_labels = repo["query-labels"]
+        org_name = repo["orgName"]
+        repo_name = repo["repoName"]
+        query_labels = repo["queryLabels"]
 
         print(f"Downloading issues from repository `{org_name}/{repo_name}`.")
 
