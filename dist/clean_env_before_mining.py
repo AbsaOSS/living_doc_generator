@@ -29,6 +29,7 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
 
     # Get the absolute path of the directory
     directory_path = os.path.join(script_dir, directory)
+    print(f"Cleaning path: {directory_path}")
 
     # Check if the directory exists
     if os.path.exists(directory_path):
@@ -37,6 +38,8 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
 
 
 if __name__ == "__main__":
+    print("Data mining for Living Documentation started")
+
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -47,4 +50,4 @@ if __name__ == "__main__":
     # Clean the output directory
     clean_directory_content(script_dir, MARKDOWN_PAGE_DIRECTORY)
 
-    print("Environment cleaning finished.")
+    print("Data mining for Living Documentation ended")

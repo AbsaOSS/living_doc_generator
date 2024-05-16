@@ -39,7 +39,7 @@ def run_script(script_name, env_vars):
         print(f"Output from {script_name}: {result.stdout}")
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        print(f"Error running {script_name}: {e.stderr}")
+        print(f"Error running {script_name}: \n{e.stdout}\n{e.stderr}")
         sys.exit(1)
 
 
