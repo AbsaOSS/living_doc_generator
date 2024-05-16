@@ -47,10 +47,6 @@ def main():
     print("Extracting arguments from command line.")
     env_vars = extract_args()
 
-    for root, dirs, files in os.walk("."):
-        for name in sorted(dirs + files):
-            print(os.path.join(root, name))
-
     # Clean environment before mining
     print("Data mining for Living Documentation")
     run_script('clean_env_before_mining.py', env_vars)
