@@ -36,7 +36,7 @@ async function run() {
             --repositories '${repositories}'`;
 
         // Running the Python script with an input
-        exec(command, (error, stdout, stderr) => {
+        exec(command, { cwd: __dirname }, (error, stdout, stderr) => {
             core.info(`Python script output: ${stdout}`);
 
             if (error) {
