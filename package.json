@@ -16,7 +16,7 @@
     "ts-jest": "^29.1.2"
   },
   "scripts": {
-    "build": "ncc build src/index.js -o dist && cp src/*.py dist/",
+    "build": "ncc build src/index.js -o dist && cp src/*.py dist/ && mkdir -p dist/templates && cp -r src/templates/* dist/templates/",
     "test": "jest"
   },
   "jest": {
