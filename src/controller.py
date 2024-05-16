@@ -66,10 +66,7 @@ def main():
 
     # Generate markdown pages
     print("Converting features to markdown pages")
-    output_path = run_script('convert_features_to_pages.py', env_vars)
-
-    # Output the documentation path
-    print(output_path)
+    run_script('convert_features_to_pages.py', env_vars)
 
 
 if __name__ == '__main__':

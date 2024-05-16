@@ -382,7 +382,7 @@ if __name__ == "__main__":
 
     # Get the current directory and ensure the output directory exists
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
+    ensure_folder_exists(os.path.join(current_dir, OUTPUT_DIRECTORY), current_dir)
 
     print("Starting the feature page generation process.")
 
@@ -407,4 +407,4 @@ if __name__ == "__main__":
     # Generate index page
     generate_index_page(features, template_index_page, milestones_as_chapters)
 
-    print(f"Living documentation generated on the path: {OUTPUT_DIRECTORY_ROOT}")
+    print(f"Living documentation generated on the path: {os.path.join(current_dir, OUTPUT_DIRECTORY)}")
