@@ -407,4 +407,4 @@ if __name__ == "__main__":
     # Generate index page
     generate_index_page(features, template_index_page, milestones_as_chapters)
 
-    print(f"Living documentation generated on the path: {os.path.join(current_dir, OUTPUT_DIRECTORY)}")
+    print(f"Living documentation generated on the path: {os.path.join(current_dir, OUTPUT_DIRECTORY_ROOT)}")
