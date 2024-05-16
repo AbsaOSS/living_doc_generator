@@ -26856,7 +26856,7 @@ async function run() {
 
             try {
                 const documentationPath = extractPath(stdout);
-                core.info(`Set output: '${documentationPath}'`)
+                core.info(`Setting output ['documentation-path': '${documentationPath}']`)
                 core.setOutput("documentation-path", documentationPath);
             } catch (extractError) {
                 core.setFailed(`Error extracting documentation path: ${extractError.message}`);
