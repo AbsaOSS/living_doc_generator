@@ -2,6 +2,7 @@ import os
 import subprocess
 import argparse
 import sys
+import re
 
 
 def extract_args():
@@ -37,7 +38,7 @@ def run_script(script_name, env_vars):
         # Running the script with updated environment
         result = subprocess.run(['python3', script_name], env=env, text=True, capture_output=True, check=True)
         print(f"Output from {script_name}: {result.stdout}")
-        return result.stdout.strip()
+
     except subprocess.CalledProcessError as e:
         print(f"Error running {script_name}: \n{e.stdout}\n{e.stderr}")
         sys.exit(1)

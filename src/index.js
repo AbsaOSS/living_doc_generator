@@ -38,10 +38,25 @@ async function run() {
                 core.setFailed(`Execution stderr: ${stderr}`);
             }
 
-            core.setOutput("documentation-path", stdout.trim());
+            try {
+                const documentationPath = extractPath(stdout);
+                core.setOutput("documentation-path", documentationPath);
+            } catch (extractError) {
+                core.setFailed(`Error extracting documentation path: ${extractError.message}`);
+            }
         });
     } catch (error) {
         core.setFailed(`Action failed with error ${error}`);
+    }
+}
+
+function extractPath(output) {
+    // Regular expression to find the line and extract the path
+    const match = output.match(/Living documentation generated on the path:\s*(.*)/);
+    if (match) {
+        return match[1].trim();
+    } else {
+        throw new Error("Generated path to Living documentation not found.");
     }
 }
 

@@ -18,7 +18,9 @@ from typing import Dict, List, Any
 INPUT_FILE = "data/feature_consolidation/feature.consolidation.json"
 PAGE_TEMPLATE_FILE = "templates/page_feature_template.md"
 INDEX_PAGE_TEMPLATE_FILE = "templates/_index_feature_template.md"
-OUTPUT_DIRECTORY = "output/features"
+OUTPUT_DIRECTORY_ROOT = "output/liv-doc"
+OUTPUT_DIRECTORY_FEATURE = "features"
+OUTPUT_DIRECTORY = os.path.join(OUTPUT_DIRECTORY_ROOT, OUTPUT_DIRECTORY_FEATURE)
 MISSING_VALUE_SYMBOL = "---"
 NOT_MINED_SYMBOL = "-?-"
 
@@ -119,16 +121,13 @@ def generate_project_info(feature: Dict[str, Any], feature_table: str) -> str:
 
     # If project mining is not allowed, set values to not mined symbol
     if project_title == 'Not mined':
-        print("DEBUG 1")
         values = [NOT_MINED_SYMBOL] * len(headers)
 
     # If feature has no project attached, add info about no project
     elif project_title == MISSING_VALUE_SYMBOL:
-        print("DEBUG 2")
         values = [MISSING_VALUE_SYMBOL] * len(headers)
 
     else:
-        print("DEBUG 3")
         values = [
             project_title,
             feature.get('Status', MISSING_VALUE_SYMBOL),
@@ -407,3 +406,5 @@ if __name__ == "__main__":
 
     # Generate index page
     generate_index_page(features, template_index_page, milestones_as_chapters)
+
+    print(f"Living documentation generated on the path: {OUTPUT_DIRECTORY_ROOT}")
