@@ -26817,6 +26817,7 @@ var __webpack_exports__ = {};
 const path = __nccwpck_require__(1017);
 const { exec } = __nccwpck_require__(2081);
 const core = __nccwpck_require__(2186);
+const fs = __nccwpck_require__(7147);
 
 async function run() {
     try {
@@ -26825,6 +26826,19 @@ async function run() {
         const projectsTitleFilter = core.getInput('projects-title-filter');
         const milestonesAsChapters = core.getInput('milestones-as-chapters');
         const repositories = core.getInput('repositories');
+
+        const currentDir = __dirname;
+        console.log(`Current directory: ${currentDir}`);
+        fs.readdir(currentDir, (err, files) => {
+            if (err) {
+                core.setFailed(`Unable to scan directory: ${err}`);
+            } else {
+                core.info('Directory contents:');
+                files.forEach(file => {
+                    core.info(file);
+                });
+            }
+        });
 
         // Construct the path to the Python script
         const scriptPath = __nccwpck_require__.ab + "controller.py";
