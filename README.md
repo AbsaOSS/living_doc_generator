@@ -1,4 +1,4 @@
-# Living documentation generator
+# Living Documentation Generator
 
 - [Motivation](#motivation)
 - [Usage](#usage)
