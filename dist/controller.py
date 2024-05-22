@@ -2,7 +2,7 @@ import os
 import subprocess
 import argparse
 import sys
-import re
+from clean_env_before_mining import clean_environment
 
 
 def extract_args():
@@ -48,24 +48,20 @@ def main():
     print("Extracting arguments from command line.")
     env_vars = extract_args()
 
-    # Clean environment before mining
     print("Data mining for Living Documentation")
-    run_script('clean_env_before_mining.py', env_vars)
+
+    clean_environment()
 
     # Data mine GitHub features from repository
-    print("Downloading issues from GitHub")
     run_script('github_query_issues.py', env_vars)
 
     # Data mine GitHub project's state
-    print("Downloading project's state")
     run_script('github_query_project_state.py', env_vars)
 
     # Consolidate all feature data together
-    print("Consolidating mined feature data")
     run_script('consolidate_feature_data.py', env_vars)
 
     # Generate markdown pages
-    print("Converting features to markdown pages")
     run_script('convert_features_to_pages.py', env_vars)
 
 
