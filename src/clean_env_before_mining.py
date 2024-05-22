@@ -37,7 +37,7 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
         shutil.rmtree(directory_path)
 
 
-def clean_environment(env_vars):
+def clean_environment():
     print("Cleaning of env for Living Documentation started")
 
     # Get the directory of the current script
@@ -54,8 +54,6 @@ def clean_environment(env_vars):
 
 
 if __name__ == "__main__":
-    import sys
-    env_vars = sys.argv[1:]
-    clean_environment(env_vars)
+    clean_environment()
     # TODO - move dir variables definition to the controlling script - add them to the env_vars
     #  - to able to provide them to all rest scripts #Issue: https://github.com/AbsaOSS/living-doc-generator/issues/4

@@ -50,7 +50,7 @@ def main():
 
     print("Data mining for Living Documentation")
 
-    clean_environment(env_vars)
+    clean_environment()
 
     # Data mine GitHub features from repository
     run_script('github_query_issues.py', env_vars)
