@@ -22,7 +22,7 @@
 - [License Information](#license-information)
 - [Contact or Support Information](#contact-or-support-information)
 
-A tool designed to data-mine GitHub repositories for issues containing project documentation (e.g. tagged with feature-related labels). This tool automatically generates comprehensive living documentation in markdown format, providing detailed feature overview pages and in-depth feature descriptions.
+A tool designed to data-mine GitHub repositories for issues containing project documentation (e.g. tagged with feature-related labels). This tool automatically generates comprehensive living documentation in Markdown format, providing detailed feature overview pages and in-depth feature descriptions.
 
 ## Motivation
 Addresses the need for continuously updated documentation accessible to all team members and stakeholders. Achieves this by extracting information directly from GitHub issues and integrating this functionality to deliver real-time, markdown-formatted output. Ensures everyone has the most current project details, fostering better communication and efficiency throughout development.
@@ -209,6 +209,71 @@ npm run build
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
+
+## Run scripts locally
+If you need to run the scripts locally, follow these steps:
+
+### Create the shell script
+Create the shell file in the root directory. We will use `run_script.sh`.
+```shell
+touch run_script.sh
+```
+Add the shebang line at the top of the sh script file.
+```
+#!/bin/sh
+```
+
+### Set the environment variables
+Set the configuration environment variables in the shell script following the structure below. 
+Also make sure that the GITHUB_TOKEN is configured in your environment variables.
+```
+export GITHUB_TOKEN=$(printenv GITHUB_TOKEN)
+export PROJECT_STATE_MINING="true"
+export PROJECTS_TITLE_FILTER="[]"
+export MILESTONES_AS_CHAPTERS="true"
+export REPOSITORIES='[
+            {
+              "orgName": "OrgName",
+              "repoName": "example-project",
+              "queryLabels": ["feature", "bug"]
+            }
+          ]'
+```
+
+### Running the GH action locally
+For running the whole GitHub action, add the following commands to the shell script:
+```
+cd src || exit 1
+
+python3 controller.py --github-token "$GITHUB_TOKEN" \
+            --project-state-mining "$PROJECT_STATE_MINING" \
+            --projects-title-filter "$PROJECTS_TITLE_FILTER" \
+            --milestones-as-chapters "$MILESTONES_AS_CHAPTERS" \
+            --repositories "$REPOSITORIES"
+
+cd .. || exit 1
+```
+
+### Running single script locally
+For running just one script at the time, add the following commands to the shell script:
+```
+cd src || exit 1
+
+python3 github_query_project_state.py
+
+cd .. || exit 1
+```
+
+### Make the Script Executable
+From the terminal that is in the root of this project, make the script executable:
+```shell
+chmod +x run_script.sh
+```
+
+### Run the Script
+```shell
+./run_script.sh
 ```
 
 ## Run unit test
