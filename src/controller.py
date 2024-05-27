@@ -2,7 +2,6 @@ import os
 import subprocess
 import argparse
 import sys
-from clean_env_before_mining import clean_environment
 
 
 def extract_args():
