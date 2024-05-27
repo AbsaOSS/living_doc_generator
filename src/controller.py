@@ -13,6 +13,8 @@ def extract_args():
     parser.add_argument('--projects-title-filter', required=True, help='Filter projects by titles. Provide a list of project titles.')
     parser.add_argument('--milestones-as-chapters', required=True, help='Treat milestones as chapters in the generated documentation.')
     parser.add_argument('--repositories', required=True, help='JSON string defining the repositories to be included in the documentation generation.')
+    parser.add_argument('--data-directory', type=str, required=True, help='Data directory, where are generated all fetched and cosolidated data.')
+    parser.add_argument('--output-directory', type=str, required=True, help='Output directory, which stores the generated documentation.')
 
     args = parser.parse_args()
 
@@ -22,9 +24,8 @@ def extract_args():
         'PROJECTS_TITLE_FILTER': args.projects_title_filter,
         'MILESTONES_AS_CHAPTERS': args.milestones_as_chapters,
         'REPOSITORIES': args.repositories,
-        'FETCH_DIRECTORY': "src/data/fetched_data",
-        'CONSOLIDATION_DIRECTORY': "src/data/consolidation_data",
-        'MARKDOWN_PAGE_DIRECTORY': "src/output/markdown_pages"
+        'DATA_DIRECTORY': "../data",
+        'OUTPUT_DIRECTORY': "../output"
     }
 
     return env_vars

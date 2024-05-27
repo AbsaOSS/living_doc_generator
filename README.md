@@ -239,31 +239,27 @@ export REPOSITORIES='[
               "queryLabels": ["feature", "bug"]
             }
           ]'
+export DATA_DIRECTORY="../data"
+export OUTPUT_DIRECTORY="../output"
 ```
 
-### Running the GH action locally
-For running the whole GitHub action, add the following commands to the shell script:
+### Running the script locally
+Incorporate these commands into the shell script and rename the script as necessary:
 ```
 cd src || exit 1
 
-python3 controller.py --github-token "$GITHUB_TOKEN" \
+python3 <name-of-python-script.py> --github-token "$GITHUB_TOKEN" \
             --project-state-mining "$PROJECT_STATE_MINING" \
             --projects-title-filter "$PROJECTS_TITLE_FILTER" \
             --milestones-as-chapters "$MILESTONES_AS_CHAPTERS" \
-            --repositories "$REPOSITORIES"
+            --repositories "$REPOSITORIES" \
+            --data-directory "$DATA_DIRECTORY" \
+            --output-directory "$OUTPUT_DIRECTORY"
 
 cd .. || exit 1
 ```
 
-### Running single script locally
-For running just one script at the time, add the following commands to the shell script:
-```
-cd src || exit 1
-
-python3 github_query_project_state.py
-
-cd .. || exit 1
-```
+For running the whole GitHub action, choose `controller.py` as the python script.
 
 ### Make the Script Executable
 From the terminal that is in the root of this project, make the script executable:
