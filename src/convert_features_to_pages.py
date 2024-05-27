@@ -15,10 +15,10 @@ from datetime import datetime
 from utils import ensure_folder_exists, parse_arguments
 from typing import Dict, List, Any
 
-INPUT_FILE = "data/feature_consolidation/feature.consolidation.json"
-PAGE_TEMPLATE_FILE = "templates/page_feature_template.md"
-INDEX_PAGE_TEMPLATE_FILE = "templates/_index_feature_template.md"
-OUTPUT_DIRECTORY_ROOT = "output/liv-doc"
+INPUT_FILE = "../data/feature_consolidation/feature.consolidation.json"
+PAGE_TEMPLATE_FILE = "../templates/page_feature_template.md"
+INDEX_PAGE_TEMPLATE_FILE = "../templates/_index_feature_template.md"
+OUTPUT_DIRECTORY_ROOT = "../output/liv-doc"
 OUTPUT_DIRECTORY_FEATURE = "features"
 OUTPUT_DIRECTORY = os.path.join(OUTPUT_DIRECTORY_ROOT, OUTPUT_DIRECTORY_FEATURE)
 MISSING_VALUE_SYMBOL = "---"
