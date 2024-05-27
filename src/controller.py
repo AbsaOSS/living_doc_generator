@@ -2,7 +2,6 @@ import os
 import subprocess
 import argparse
 import sys
-from clean_env_before_mining import clean_environment
 
 
 def extract_args():
@@ -22,20 +21,19 @@ def extract_args():
         'PROJECT_STATE_MINING': args.project_state_mining,
         'PROJECTS_TITLE_FILTER': args.projects_title_filter,
         'MILESTONES_AS_CHAPTERS': args.milestones_as_chapters,
-        'REPOSITORIES': args.repositories
+        'REPOSITORIES': args.repositories,
+        'FETCH_DIRECTORY': "src/data/fetched_data",
+        'CONSOLIDATION_DIRECTORY': "src/data/consolidation_data",
+        'MARKDOWN_PAGE_DIRECTORY': "src/output/markdown_pages"
     }
 
     return env_vars
 
 
-def run_script(script_name, env_vars):
+def run_script(script_name, env):
     """ Helper function to run a Python script with environment variables using subprocess """
     try:
-        # Setting up the environment for subprocess
-        env = os.environ.copy()
-        env.update(env_vars)
-
-        # Running the script with updated environment
+        # Running the python script with given environment variables
         result = subprocess.run(['python3', script_name], env=env, text=True, capture_output=True, check=True)
         print(f"Output from {script_name}: {result.stdout}")
 
@@ -48,21 +46,28 @@ def main():
     print("Extracting arguments from command line.")
     env_vars = extract_args()
 
-    print("Data mining for Living Documentation")
+    # Create a local copy of the current environment variables
+    local_env = os.environ.copy()
 
-    clean_environment(env_vars)
+    # Add the script-specific environment variables to the local copy
+    local_env.update(env_vars)
+
+    print("Starting the Living Documentation Generator - mining phase")
+
+    # Clean the environment before mining
+    run_script('clean_env_before_mining.py', local_env)
 
     # Data mine GitHub features from repository
-    run_script('github_query_issues.py', env_vars)
+    run_script('github_query_issues.py', local_env)
 
     # Data mine GitHub project's state
-    run_script('github_query_project_state.py', env_vars)
+    run_script('github_query_project_state.py', local_env)
 
     # Consolidate all feature data together
-    run_script('consolidate_feature_data.py', env_vars)
+    run_script('consolidate_feature_data.py', local_env)
 
     # Generate markdown pages
-    run_script('convert_features_to_pages.py', env_vars)
+    run_script('convert_features_to_pages.py', local_env)
 
 
 if __name__ == '__main__':

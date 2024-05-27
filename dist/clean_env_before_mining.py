@@ -11,12 +11,6 @@ import os
 import shutil
 
 
-# Directories used in the project
-FETCH_DIRECTORY = "data/fetched_data"
-CONSOLIDATION_DIRECTORY = "data/consolidation_data"
-MARKDOWN_PAGE_DIRECTORY = "output/markdown_pages"
-
-
 def clean_directory_content(script_dir: str, directory: str) -> None:
     """
         Deletes all content from the specified directory.
@@ -37,17 +31,26 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
         shutil.rmtree(directory_path)
 
 
-if __name__ == "__main__":
-    print("Data mining for Living Documentation started")
+def clean_environment():
+    print("Cleaning environment for the Living Doc Generator")
 
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
+    # Get the directory variables from the environment variables
+    fetch_directory = os.environ['FETCH_DIRECTORY']
+    consolidation_directory = os.environ['CONSOLIDATION_DIRECTORY']
+    markdown_page_directory = os.environ['MARKDOWN_PAGE_DIRECTORY']
+
     # Clean the fetched data directories
-    clean_directory_content(script_dir, FETCH_DIRECTORY)
-    clean_directory_content(script_dir, CONSOLIDATION_DIRECTORY)
+    clean_directory_content(script_dir, fetch_directory)
+    clean_directory_content(script_dir, consolidation_directory)
 
     # Clean the output directory
-    clean_directory_content(script_dir, MARKDOWN_PAGE_DIRECTORY)
+    clean_directory_content(script_dir, markdown_page_directory)
 
-    print("Data mining for Living Documentation ended")
+    print("Cleaning of env for Living Documentation ended")
+
+
+if __name__ == "__main__":
+    clean_environment()

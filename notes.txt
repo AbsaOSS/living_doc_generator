@@ -1,6 +1,0 @@
-python3 scripts/controller.py
-            --github-token "${githubToken}" \
-            --project-state-mining "${projectStateMining}" \
-            --projects-title-filter "${projectsTitleFilter}" \
-            --milestones-as-chapters "${milestonesAsChapters}" \
-            --repositories '${repositories}'`

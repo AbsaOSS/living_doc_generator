@@ -159,3 +159,16 @@ cython_debug/
 /.idea/
 node_modules
 /package-lock.json
+
+# Generated outputs
+dist/data/
+dist/output/
+src/data/
+src/output/
+
+# Debugging files
+debugme_script.sh
+debugme.sh
+
+
+
