@@ -15,7 +15,7 @@ import os
 from typing import Dict, List
 from utils import parse_arguments, ensure_folder_exists, save_state_to_json_file
 
-OUTPUT_DIRECTORY = "data/fetched_data/project_data"
+OUTPUT_DIRECTORY = "../data/fetched_data/project_data"
 ISSUES_FROM_PROJECT_QUERY = """
     query {{
       node(id: "{project_id}") {{

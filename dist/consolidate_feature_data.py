@@ -15,9 +15,9 @@ from copy import deepcopy
 from typing import List, Dict, Set, Tuple
 from utils import parse_arguments, ensure_folder_exists, save_state_to_json_file
 
-OUTPUT_DIRECTORY = "data/feature_consolidation"
-FEATURE_DIRECTORY = "data/fetched_data/feature_data"
-PROJECT_DIRECTORY = "data/fetched_data/project_data"
+OUTPUT_DIRECTORY = "../data/feature_consolidation"
+FEATURE_DIRECTORY = "../data/fetched_data/feature_data"
+PROJECT_DIRECTORY = "../data/fetched_data/project_data"
 
 
 def load_feature_json_data(directory: str, repo_name: str) -> List[dict]:
