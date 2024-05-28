@@ -1,21 +1,20 @@
-"""GitHub Query Project State
+"""
+GitHub Query Project State
 
 This script is used to fetch and process project state data from GitHub.
 It queries GitHub's GraphQL API to get the data, and then processes and generate
 project output JSON file/s.
-
-The script can be run from the command line with optional arguments:
-    * python3 github_query_project_state.py
-    * python3 github_query_project_state.py -c config.json
 """
 
 import requests
 import json
 import os
 from typing import Dict, List
-from utils import parse_arguments, ensure_folder_exists, save_state_to_json_file
+from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
+from containers import Repository
 
 OUTPUT_DIRECTORY = "../data/fetched_data/project_data"
+ISSUE_PER_PAGE = 100
 ISSUES_FROM_PROJECT_QUERY = """
     query {{
       node(id: "{project_id}") {{
@@ -53,48 +52,7 @@ ISSUES_FROM_PROJECT_QUERY = """
       }}
     }}
     """
-
-
-def send_graphql_query(query: str, headers: Dict[str, str]) -> Dict[str, dict]:
-    """
-        Sends a GraphQL query to the GitHub API and returns the response.
-        If an HTTP error occurs, it prints the error and returns an empty dictionary.
-
-        @param query: The GraphQL query to be sent in f string format.
-        @param headers: The headers to be included in the request.
-
-        @return: The response from the GitHub GraphQL API as a dictionary.
-    """
-    try:
-        # Fetch the response
-        response = session.post('https://api.github.com/graphql', json={'query': query}, headers=headers)
-        # Check if the request was successful
-        response.raise_for_status()
-
-        return response.json()["data"]
-
-    # Specific error handling for HTTP errors
-    except requests.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    return {}
-
-
-def get_projects_from_repo(org_name: str, repo_name: str, headers: Dict[str, str]) -> List[dict]:
-    """
-        Fetches all projects from a given GitHub repository using GraphQL query.
-        If the response is empty, it returns an empty list.
-
-        @param org_name: The organization / owner name.
-        @param repo_name: The repository name for getting attached projects.
-        @param headers: The headers to be included in the request.
-
-        @return: The list of all projects attached to the repository.
-    """
-    query = f"""
+PROJECTS_FROM_REPO_QUERY = """
         query {{
           repository(owner: "{org_name}", name: "{repo_name}") {{
             projectsV2(first: 100) {{
@@ -107,36 +65,7 @@ def get_projects_from_repo(org_name: str, repo_name: str, headers: Dict[str, str
           }}
         }}
         """
-
-    # Fetch the response from the server
-    response = send_graphql_query(query, headers)
-
-    # Check if the response is empty
-    if len(response) == 0:
-        return []
-
-    if response['repository'] is not None:
-        project_data = response['repository']['projectsV2']['nodes']
-    else:
-        print(f"Warning: 'repository' key is None in response: {response}")
-        project_data = []
-
-    return project_data
-
-
-def get_project_option_fields(org_name: str, repo_name: str, project_number: str, headers: Dict[str, str]) -> List[dict]:
-    """
-        Fetches the option fields for a given project using a GraphQL query like size or priority.
-        If the response is empty, it returns an empty list.
-
-        @param org_name: The organization / owner name.
-        @param repo_name: The repository name.
-        @param project_number: The project number.
-        @param headers: The headers to be included in the request.
-
-        @return: The list of option fields for the project.
-    """
-    query = f"""
+PROJECT_OPTION_FIELDS_QUERY = """
         query {{
           repository(owner: "{org_name}", name: "{repo_name}") {{
             projectV2(number: {project_number}) {{
@@ -156,158 +85,233 @@ def get_project_option_fields(org_name: str, repo_name: str, project_number: str
         }}
         """
 
-    # Fetch the response from the server
-    response = send_graphql_query(query, headers)
-    # Check if the response is empty
-    if len(response) == 0:
+
+def send_graphql_query(query: str, session: requests.sessions.Session) -> Dict[str, dict]:
+    """
+    Sends a GraphQL query to the GitHub API and returns the response.
+    If an HTTP error occurs, it prints the error and returns an empty dictionary.
+
+    @param query: The GraphQL query to be sent in f string format.
+    @param session: A configured request session.
+
+    @return: The response from the GitHub GraphQL API in a dictionary format.
+    """
+    try:
+        # Fetch the response from the API
+        response = session.post('https://api.github.com/graphql', json={'query': query})
+        # Check if the request was successful
+        response.raise_for_status()
+
+        return response.json()["data"]
+
+    # Specific error handling for HTTP errors
+    except requests.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    return {}
+
+
+def get_projects_from_repo(org_name: str, repo_name: str, session: requests.sessions.Session) -> List[dict]:
+    """
+    Fetches all projects from a given GitHub repository using GraphQL query.
+    If the response is empty, it returns an empty list.
+
+    @param org_name: The organization / owner name.
+    @param repo_name: The repository name for getting attached projects.
+    @param session: A configured request session.
+
+    @return: The list of all projects attached to the repository.
+    """
+
+    # Fetch the GraphQL response with projects attached to the repository
+    projects_from_repo_query = PROJECTS_FROM_REPO_QUERY.format(org_name=org_name, repo_name=repo_name)
+    project_response = send_graphql_query(projects_from_repo_query, session)
+
+    # Return empty list, if repo has no project attached
+    if len(project_response) == 0:
         return []
 
-    field_options = response['repository']['projectV2']['fields']['nodes']
+    if project_response['repository'] is not None:
+        projects = project_response['repository']['projectsV2']['nodes']
+    else:
+        print(f"Warning: 'repository' key is None in response: {project_response}")
+        projects = []
+
+    return projects
+
+
+def get_project_option_fields(org_name: str, repo_name: str, project_number: str, session: requests.sessions.Session) -> List[dict]:
+    """
+    Fetches the option fields for a given project using a GraphQL query like size or priority.
+    If the response is empty, it returns an empty list.
+
+    @param org_name: The organization / owner name.
+    @param repo_name: The repository name.
+    @param project_number: The project number.
+    @param session: A configured request session.
+
+    @return: The raw list output of option fields for the project.
+    """
+    # Fetch the GraphQL response with option fields used in a project
+    project_option_fields_query = PROJECT_OPTION_FIELDS_QUERY.format(org_name=org_name, repo_name=repo_name, project_number=project_number)
+    option_field_response = send_graphql_query(project_option_fields_query, session)
+
+    # Return empty list, if project does not use option fields
+    if len(option_field_response) == 0:
+        return []
+
+    raw_field_options = option_field_response['repository']['projectV2']['fields']['nodes']
+
+    return raw_field_options
+
+
+def sanitize_field_options(raw_field_options: List[dict]) -> Dict[str, List[str]]:
+    """
+    Converts the raw field options output to a formated dictionary.
+    The dictionary keys are the field names and the values are lists of options.
+
+    @param raw_field_options: The raw field options output.
+
+    @return: The field options for a project as a dictionary.
+    """
+    field_options = {}
+
+    # Make a sanitized dict with field names and its options
+    for field_option in raw_field_options:
+        if "name" in field_option and "options" in field_option:
+            field_name = field_option["name"]
+            options = [option["name"] for option in field_option["options"]]
+
+            # Update the dict with every unique field
+            field_options.update({field_name: options})
 
     return field_options
 
 
-def convert_field_options_to_dict(field_options: List[dict]) -> Dict[str, List[str]]:
+def get_unique_projects(repositories: List[Repository], session: requests.sessions.Session) -> Dict[str, dict]:
     """
-        Converts the raw field options output to a dictionary.
-        The dictionary keys are the field names and the values are lists of options.
+    Generate a main structure for every unique project.
+    Connects project with the repositories.
 
-        @param field_options: The raw field options output.
+    @param repositories: The list of repositories to fetch projects from.
+    @param session: A configured request session.
 
-        @return: The field options as a dictionary.
-    """
-    field_options_dict = {}
-
-    # Make a dictionary with field title and its options
-    for field_option in field_options:
-        if "name" in field_option and "options" in field_option:
-            field_name = field_option["name"]
-            options = [option["name"] for option in field_option["options"]]
-            # Update the dict with every field
-            field_options_dict.update({field_name: options})
-
-    return field_options_dict
-
-
-def get_unique_projects(repositories: List[dict], headers: Dict[str, str]) -> Dict[str, dict]:
-    """
-        Generate a main structure for every unique project.
-        Connects project with the repositories.
-
-        @param repositories: The list of repositories to fetch projects from.
-        @param headers: The headers to be included in the request.
-
-        @return: The unique project structure as a dictionary.
+    @return: The unique project structure as a dictionary.
     """
     unique_projects = {}
 
-    # Look for projects in every config repo
-    for repo in repositories:
-        org_name = repo["orgName"]
-        repo_name = repo["repoName"]
+    # Process every repo from repos input
+    for repo_data in repositories:
+        repository = Repository(
+            orgName=repo_data["orgName"],
+            repoName=repo_data["repoName"],
+            queryLabels=repo_data["queryLabels"]
+        )
 
-        # Get the projects from the repo
-        projects = get_projects_from_repo(org_name, repo_name, headers)
+        # Fetch projects, that are attached to the repo
+        projects = get_projects_from_repo(repository.orgName, repository.repoName, session)
 
-        # Check if the project is unique
+        # Update unique_projects with main project structure for every project
         for project in projects:
             project_id = project["id"]
 
-            # Add info about the unique project to the dictionary
+            # Ensure project is unique and add its structure to unique projects
             if project_id not in unique_projects:
                 project_title = project["title"]
                 project_number = project["number"]
 
-                # Get the raw version of field options for project
-                field_options_raw = get_project_option_fields(org_name, repo_name, project_number, headers)
+                # Get the raw output for field project options
+                raw_field_options = get_project_option_fields(repository.orgName, repository.repoName, project_number, session)
 
-                # Convert the raw field options output to a dictionary
-                sanitized_field_options_dict = convert_field_options_to_dict(field_options_raw)
+                # Convert the raw field options output to a sanitized dict version
+                sanitized_field_options = sanitize_field_options(raw_field_options)
 
-                # Structure of one project
+                # Primary project structure
                 unique_projects[project_id] = {
                     "ID": project_id,
                     "Number": project_number,
                     "Title": project_title,
-                    "Owner": org_name,
-                    "RepositoriesFromConfig": [repo_name],
+                    "Owner": repository.orgName,
+                    "RepositoriesFromConfig": [repository.orgName],
                     "ProjectRepositories": [],
                     "Issues": [],
-                    "FieldOptions": sanitized_field_options_dict
+                    "FieldOptions": sanitized_field_options
                 }
             else:
-                # If the project does exist, update the attached repositories list
-                unique_projects[project_id]["RepositoriesFromConfig"].append(repo_name)
+                # If the project already exists, update the `RepositoriesFromConfig` list
+                unique_projects[project_id]["RepositoriesFromConfig"].append(repository.orgName)
 
     return unique_projects
 
 
-def get_issues_from_project(project_id: str, headers: Dict[str, str], issues_per_page: int = 100) -> List[Dict[str, dict]]:
+def get_issues_from_project(project_id: str, session: requests.sessions.Session) -> List[Dict[str, dict]]:
     """
-        Fetches all issues from a given project using a GraphQL query.
-        The issues are fetched page by page, with set 100 issues per page.
+    Fetches all issues from a given project using a GraphQL query.
+    The issues are fetched supported by pagination.
 
-        @param project_id: The project ID to fetch issues from.
-        @param headers: The headers to be included in the request.
-        @param issues_per_page: The maximum number of issues to fetch per page.
+    @param project_id: The project ID to fetch issues from.
+    @param session: A configured request session.
 
-        @return: The list of all issues in the project.
+    @return: The list of all issues in the project.
     """
-    all_project_issues = []
+    project_issues = []
     cursor = None
 
     while True:
         # Add the after argument to the query if a cursor is provided
         after_argument = f'after: "{cursor}"' if cursor else ''
 
-        query = ISSUES_FROM_PROJECT_QUERY.format(project_id=project_id, issues_per_page=issues_per_page, after_argument=after_argument)
+        # Fetch the GraphQL response with all issues attached to specific project
+        issues_from_project_query = ISSUES_FROM_PROJECT_QUERY.format(project_id=project_id, issues_per_page=ISSUE_PER_PAGE, after_argument=after_argument)
+        project_issues_response = send_graphql_query(issues_from_project_query, session)
 
-        # Fetch the response from the server
-        response = send_graphql_query(query, headers)
-
-        # Check if the response is empty
-        if len(response) == 0:
+        # Return empty list, if project has no issues attached
+        if len(project_issues_response) == 0:
             return []
 
-        response_structure = response['node']['items']
-        issue_data = response_structure['nodes']
-        page_info = response_structure['pageInfo']
+        general_response_structure = project_issues_response['node']['items']
+        issue_data = general_response_structure['nodes']
+        page_info = general_response_structure['pageInfo']
 
-        all_project_issues.extend(issue_data)
+        # Extend project issues list per every page during pagination
+        project_issues.extend(issue_data)
         print(f"Loaded `{len(issue_data)}` issues.")
 
+        # Check for closing the pagination process
         if not page_info['hasNextPage']:
             break
         cursor = page_info['endCursor']
 
-    return all_project_issues
+    return project_issues
 
 
-def process_projects(unique_projects: Dict[str, dict], headers: Dict[str, str]) -> Dict[str, dict]:
+def process_projects(unique_projects: Dict[str, dict], session: requests.sessions.Session) -> Dict[str, dict]:
     """
-        Processes the projects and updates their state with the fetched issues.
-        The state of each project includes the issues and the attached repositories.
+    Processes the projects and updates their state with the fetched issues.
+    The state of each project includes the issues and the attached repositories.
 
-        @param unique_projects: The unique projects to process.
-        @param headers: The headers to be included in the request.
+    @param unique_projects: The unique project structures to process.
+    @param session: A configured request session.
 
-        @return: The state of all projects as a `project_title: project_state` dictionary.
+    @return: The state of all projects as a `project_title: project_state` dictionary.
     """
     project_states = {}
 
-    # For unique project update it's state with adequate issues
+    # Update every project with adequate issue data
     for project_id, project_state in unique_projects.items():
-        project_title = project_state["Title"]
-        # Setting attached repositories to a project
         attached_repos = []
+        project_title = project_state["Title"]
 
         print(f"Loaded project: `{project_title}`")
         print(f"Processing issues...")
 
-        # Get issues from project
-        project_issue_data = get_issues_from_project(project_id, headers)
+        # Get issues for project
+        project_issue_data = get_issues_from_project(project_id, session)
 
-        # Process the issues and add them to the project state
+        # Process the issue data and update project state
         for issue in project_issue_data:
             if 'content' in issue and issue['content'] is not None:
                 content = issue['content']
@@ -324,7 +328,7 @@ def process_projects(unique_projects: Dict[str, dict], headers: Dict[str, str]) 
                         issue_field_types.append(node['name'])
 
                 # Initialize a dictionary for the issue
-                project_issue_dict = {
+                project_issue = {
                     "Number": number,
                     "Owner": owner,
                     "RepositoryName": repo_name,
@@ -332,7 +336,7 @@ def process_projects(unique_projects: Dict[str, dict], headers: Dict[str, str]) 
                     "State": state
                 }
 
-                issue_repo_name = project_issue_dict["RepositoryName"]
+                issue_repo_name = project_issue["RepositoryName"]
 
                 # Updating the ProjectRepositories
                 if issue_repo_name != "N/A":
@@ -348,10 +352,10 @@ def process_projects(unique_projects: Dict[str, dict], headers: Dict[str, str]) 
                     # Look if issue field is in the field options
                     for name, options in field_options.items():
                         if field_type in options:
-                            project_issue_dict.update({name: field_type})
+                            project_issue.update({name: field_type})
 
                 # Add the issue to the project state
-                project_state['Issues'].append(project_issue_dict)
+                project_state['Issues'].append(project_issue)
             else:
                 print(f"Warning: 'content' key missing or None in issue: {issue}")
 
@@ -363,15 +367,18 @@ def process_projects(unique_projects: Dict[str, dict], headers: Dict[str, str]) 
     return project_states
 
 
-if __name__ == "__main__":
-    # Get environment variables set by the controller script
-    user_token = os.getenv('GITHUB_TOKEN')
+def main() -> None:
+    print("Script for downloading project data from GitHub GraphQL started.")
+
+    # Get environment variables from the controller script
+    github_token = os.getenv('GITHUB_TOKEN')
+    repositories = os.getenv('REPOSITORIES')
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
     # projects_title_filter = os.getenv('PROJECTS_TITLE_FILTER')
-    repositories = os.getenv('REPOSITORIES')
 
     # Parse the boolean values
     project_state_mining = project_state_mining.lower() == 'true'
+    # projects_title_filter = projects_title_filter.lower() == 'true'
 
     # Parse repositories JSON string
     try:
@@ -380,39 +387,34 @@ if __name__ == "__main__":
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
 
-    print("Environment variables:")
-    print(f"PROJECT_STATE_MINING: {project_state_mining}")
-    # print(f"PROJECTS_TITLE_FILTER: {projects_title_filter}")
-    print(f"REPOSITORIES: {repositories}")
-
-    # Get the current directory and ensure the output directory exists
+    # Get the current directory and check that output dir exists
     current_dir = os.path.dirname(os.path.abspath(__file__))
     ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
 
-    # Check the condition and exit the script if necessary
+    # Check if project mining is allowed and exit the script if necessary
     if not project_state_mining:
         print("Project data mining is not allowed. The process will not start.")
         exit()
 
     print("Project data mining allowed, starting the process.")
 
-    # Set the variable for running the script
-    headers = {
-        "Authorization": f"Bearer {user_token}",
-        "User-Agent": "IssueFetcher/1.0"
-    }
+    # Initialize the request session
+    session = initialize_request_session(github_token)
 
-    # Start a session for the queries
-    session = requests.Session()
+    # Get unique projects with primary structure
+    unique_projects = get_unique_projects(repositories, session)
 
-    # Get unique projects
-    unique_projects = get_unique_projects(repositories, headers)
+    # Process unique projects with updating their state with attached issues' info
+    project_states = process_projects(unique_projects, session)
 
-    # Final process for each unique project
-    project_states = process_projects(unique_projects, headers)
-
-    # Save project state to the unique JSON file
+    # Save project states to the unique JSON files
     for project_title, project_state in project_states.items():
-        # Save the project state to a file
         output_file_name = save_state_to_json_file(project_state, "project", OUTPUT_DIRECTORY, project_title)
         print(f"Project's '{project_title}' Issue state saved into file: {output_file_name}.")
+
+    print("Script for downloading project data from GitHub GraphQL ended.")
+
+
+if __name__ == "__main__":
+    main()
+

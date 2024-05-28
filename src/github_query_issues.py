@@ -11,7 +11,7 @@ import json
 import re
 import os
 from typing import Set, List
-from utils import ensure_folder_exists, save_state_to_json_file, get_request_headers
+from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
 from containers import Repository, Issue
 
 OUTPUT_DIRECTORY = "../data/fetched_data/feature_data"
@@ -121,10 +121,8 @@ def get_issues_from_repository(org_name: str, repo_name: str, github_token: str,
     loaded_issues = []
     added_issue_numbers = set()
 
-    # Prepare the search query
-    session = requests.Session()
-    headers = get_request_headers(github_token)
-    session.headers.update(headers)
+    # Initialize the request session
+    session = initialize_request_session(github_token)
 
     if query_labels is None:
         query_labels = []
@@ -217,7 +215,7 @@ def process_issues(loaded_issues: List[dict], org_name: str, repo_name: str) -> 
 
 
 def main() -> None:
-    print("Downloading issues from GitHub API started.")
+    print("Script for downloading issues from GitHub API started.")
 
     # Get environment variables from the controller script
     github_token = os.getenv('GITHUB_TOKEN')
@@ -252,7 +250,7 @@ def main() -> None:
         output_file_name = save_state_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repoName)
         print(f"Saved {len(processed_issues)} issues to {output_file_name}.")
 
-    print("Downloading issues from GitHub API ended.")
+    print("Script for downloading issues from GitHub API ended.")
 
 
 if __name__ == "__main__":

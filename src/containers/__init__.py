@@ -8,6 +8,8 @@ class Repository:
     repoName: str
     queryLabels: List[str]
 
+    def __getitem__(self, item):
+        return self.__dict__[item]
 
 @dataclass
 class Issue:

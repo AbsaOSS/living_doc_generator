@@ -8,6 +8,7 @@ These functions can be imported and used in other src as needed.
 import os
 import json
 import argparse
+import requests
 from typing import Union, Dict
 
 
@@ -34,39 +35,42 @@ def parse_arguments(description: str) -> argparse.Namespace:
     return args
 
 
-def get_request_headers(github_token: str) -> Dict[str, str]:
+def initialize_request_session(github_token: str) -> requests.sessions.Session:
     """
-    Creates the request headers for the GitHub API.
+    Initializes the request Session and updates the headers.
 
     @param github_token: The GitHub user token for authentication.
 
-    @return: The request headers as a dictionary.
+    @return: A configured request session.
     """
 
+    session = requests.Session()
     headers = {
         "Authorization": f"Bearer {github_token}",
         "User-Agent": "IssueFetcher/1.0"
     }
+    session.headers.update(headers)
 
-    return headers
+    return session
 
 
 def ensure_folder_exists(folder_name: str, current_dir: str) -> None:
     """
-        Ensures if folder exists. Creates it if it doesn't.
+    Ensures that given folder exists. Creates it if it doesn't.
 
-        @param folder_name: The name of the folder to check.
-        @param current_dir: The directory of the current script.
+    @param folder_name: The name of the folder to check.
+    @param current_dir: The directory of the current script.
 
-        @return: None
+    @return: None
     """
 
     # Path to the folder in the same directory as this script
     folder_path = os.path.join(current_dir, folder_name)
 
     # Create the folder if it does not exist
-    os.makedirs(folder_path, exist_ok=True)
-    print(f"The {folder_name} folder has been created.")
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+        print(f"The '{folder_path}' folder has been created.")
 
 
 def save_state_to_json_file(state_to_save: Union[list, dict], object_type: str, output_directory: str, state_name: str) -> str:
