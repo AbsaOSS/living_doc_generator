@@ -8,7 +8,7 @@ These functions can be imported and used in other src as needed.
 import os
 import json
 import argparse
-from typing import Union
+from typing import Union, Dict
 
 
 def parse_arguments(description: str) -> argparse.Namespace:
@@ -32,6 +32,23 @@ def parse_arguments(description: str) -> argparse.Namespace:
     args = parser.parse_args()
 
     return args
+
+
+def get_request_headers(github_token: str) -> Dict[str, str]:
+    """
+    Creates the request headers for the GitHub API.
+
+    @param github_token: The GitHub user token for authentication.
+
+    @return: The request headers as a dictionary.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "User-Agent": "IssueFetcher/1.0"
+    }
+
+    return headers
 
 
 def ensure_folder_exists(folder_name: str, current_dir: str) -> None:
