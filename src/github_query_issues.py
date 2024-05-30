@@ -160,7 +160,7 @@ def get_issues_from_repository(repo: Repository, github_token: str) -> List[dict
     return loaded_issues
 
 
-def process_issues(loaded_issues: List[dict], repo: Repository) -> List[dict]:
+def process_issues(loaded_issues: List[dict], repo: Repository) -> List[Issue]:
     """
     Processes the fetched issues and prepares them for saving.
     Mandatory issue structure is generated here with all necessary fields.
@@ -185,7 +185,7 @@ def process_issues(loaded_issues: List[dict], repo: Repository) -> List[dict]:
         sanitized_md_filename = sanitize_filename(md_filename_base)
 
         # Define Issue object as it follows the Issue dataclass
-        issue = Issue(
+        issue_object = Issue(
             number=issue['number'],
             owner=repo.orgName,
             repositoryName=repo.repoName,
@@ -204,8 +204,8 @@ def process_issues(loaded_issues: List[dict], repo: Repository) -> List[dict]:
         )
 
         # Convert Issue object to dictionary, because JSON does not support dataclasses
-        issue_dict = issue.to_dict()
-        processed_issues.append(issue_dict)
+        issue = issue_object.to_dict()
+        processed_issues.append(issue)
 
     return processed_issues
 

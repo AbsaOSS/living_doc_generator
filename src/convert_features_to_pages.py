@@ -12,7 +12,7 @@ import json
 import os
 import re
 from datetime import datetime
-from utils import ensure_folder_exists, parse_arguments
+from utils import ensure_folder_exists
 from typing import Dict, List, Any
 
 INPUT_FILE = "../data/feature_consolidation/feature.consolidation.json"
@@ -74,18 +74,18 @@ def generate_feature_info(feature: Dict[str, Any]) -> str:
 
     # Define the values adequate to the headers
     values = [
-        feature.get('Owner', MISSING_VALUE_SYMBOL),
-        feature.get('RepositoryName', MISSING_VALUE_SYMBOL),
-        feature.get('Number', MISSING_VALUE_SYMBOL),
-        feature.get('State', MISSING_VALUE_SYMBOL).lower(),
+        feature.get('owner', MISSING_VALUE_SYMBOL),
+        feature.get('repositoryName', MISSING_VALUE_SYMBOL),
+        feature.get('number', MISSING_VALUE_SYMBOL),
+        feature.get('state', MISSING_VALUE_SYMBOL).lower(),
         labels,
-        feature.get('URL', MISSING_VALUE_SYMBOL),
-        feature.get('CreatedAt', MISSING_VALUE_SYMBOL),
-        feature.get('UpdatedAt', MISSING_VALUE_SYMBOL),
-        feature.get('ClosedAt', MISSING_VALUE_SYMBOL),
-        feature.get('MilestoneNumber', MISSING_VALUE_SYMBOL),
-        feature.get('MilestoneTitle', MISSING_VALUE_SYMBOL),
-        feature.get('MilestoneHtmlUrl', MISSING_VALUE_SYMBOL)
+        feature.get('url', MISSING_VALUE_SYMBOL),
+        feature.get('createdAt', MISSING_VALUE_SYMBOL),
+        feature.get('updatedAt', MISSING_VALUE_SYMBOL),
+        feature.get('closedAt', MISSING_VALUE_SYMBOL),
+        feature.get('milestoneNumber', MISSING_VALUE_SYMBOL),
+        feature.get('milestoneTitle', MISSING_VALUE_SYMBOL),
+        feature.get('milestoneHtmlUrl', MISSING_VALUE_SYMBOL)
     ]
 
     # Initialize the feature_info string with the table header
