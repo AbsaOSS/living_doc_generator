@@ -55,21 +55,20 @@ def save_issue_without_duplicates(issue: dict, loaded_issues: List[dict], added_
         added_issue_numbers.add(issue["number"])
 
 
-def get_base_endpoint(label_name: str, org_name: str, repo_name: str) -> str:
+def get_base_endpoint(label_name: str, repo: Repository) -> str:
     """
     Prepares the base endpoint for fetching issues from a GitHub repository.
     If the label name is not specified, the base endpoint is for fetching all issues.
 
     @param label_name: The name of the label.
-    @param org_name: The organization / owner name.
-    @param repo_name: The repository name.
+    @param repo: The repository object.
 
     @return: The base endpoint for fetching issues.
     """
     if label_name is None:
-        search_query = f"repo:{org_name}/{repo_name} is:issue"
+        search_query = f"repo:{repo.orgName}/{repo.repoName} is:issue"
     else:
-        search_query = f"repo:{org_name}/{repo_name} is:issue label:{label_name}"
+        search_query = f"repo:{repo.orgName}/{repo.repoName} is:issue label:{label_name}"
 
     base_endpoint = f"https://api.github.com/search/issues?q={search_query}&per_page={ISSUE_PER_PAGE}"
 
@@ -106,15 +105,13 @@ def process_issues_by_label(fetched_issues: List[dict], loaded_issues: List[dict
                     save_issue_without_duplicates(issue, loaded_issues, added_issue_numbers)
 
 
-def get_issues_from_repository(org_name: str, repo_name: str, github_token: str, query_labels: List = None) -> List[dict]:
+def get_issues_from_repository(repo: Repository, github_token: str) -> List[dict]:
     """
     Fetches all issues from a GitHub repository using the GitHub REST API.
     If query_labels are not specified, all issues are fetched.
 
-    @param org_name: The organization / owner name.
-    @param repo_name: The repository name.
+    @param repo: The repository object.
     @param github_token: The GitHub token.
-    @param query_labels: The issue labels to query.
 
     @return: The list of all fetched issues.
     """
@@ -124,12 +121,12 @@ def get_issues_from_repository(org_name: str, repo_name: str, github_token: str,
     # Initialize the request session
     session = initialize_request_session(github_token)
 
-    if query_labels is None:
-        query_labels = []
+    if repo.queryLabels is None:
+        repo.queryLabels = []
 
     # One session request per one label
-    for label_name in query_labels:
-        base_endpoint = get_base_endpoint(label_name, org_name, repo_name)
+    for label_name in repo.queryLabels:
+        base_endpoint = get_base_endpoint(label_name, repo)
         page = 1
 
         try:
@@ -163,14 +160,13 @@ def get_issues_from_repository(org_name: str, repo_name: str, github_token: str,
     return loaded_issues
 
 
-def process_issues(loaded_issues: List[dict], org_name: str, repo_name: str) -> List[dict]:
+def process_issues(loaded_issues: List[dict], repo: Repository) -> List[dict]:
     """
     Processes the fetched issues and prepares them for saving.
     Mandatory issue structure is generated here with all necessary fields.
 
     @param loaded_issues: The list of loaded issues.
-    @param org_name: The organization / owner name.
-    @param repo_name: The issue repository name.
+    @param repo: The repository object.
 
     @return: The list of processed issues.
     """
@@ -189,10 +185,10 @@ def process_issues(loaded_issues: List[dict], org_name: str, repo_name: str) -> 
         sanitized_md_filename = sanitize_filename(md_filename_base)
 
         # Define Issue object as it follows the Issue dataclass
-        issue_object = Issue(
+        issue = Issue(
             number=issue['number'],
-            owner=org_name,
-            repositoryName=repo_name,
+            owner=repo.orgName,
+            repositoryName=repo.repoName,
             title=issue['title'],
             state=issue['state'],
             url=issue['html_url'],
@@ -208,7 +204,7 @@ def process_issues(loaded_issues: List[dict], org_name: str, repo_name: str) -> 
         )
 
         # Convert Issue object to dictionary, because JSON does not support dataclasses
-        issue_dict = issue_object.to_dict()
+        issue_dict = issue.to_dict()
         processed_issues.append(issue_dict)
 
     return processed_issues
@@ -241,10 +237,10 @@ def main() -> None:
         print(f"Downloading issues from repository `{repo.orgName}/{repo.repoName}`.")
 
         # Load Issues from repository
-        loaded_issues = get_issues_from_repository(repo.orgName, repo.repoName, github_token, repo.queryLabels)
+        loaded_issues = get_issues_from_repository(repo, github_token)
 
         # Process issues
-        processed_issues = process_issues(loaded_issues, repo.orgName, repo.repoName)
+        processed_issues = process_issues(loaded_issues, repo)
 
         # Save issues from one repository to the unique JSON file
         output_file_name = save_state_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repoName)

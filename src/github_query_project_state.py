@@ -204,15 +204,13 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
     unique_projects = {}
 
     # Process every repo from repos input
-    for repo_data in repositories:
-        repository = Repository(
-            orgName=repo_data["orgName"],
-            repoName=repo_data["repoName"],
-            queryLabels=repo_data["queryLabels"]
-        )
+    for repository in repositories:
+        repo = Repository(orgName=repository["orgName"],
+                          repoName=repository["repoName"],
+                          queryLabels=repository["queryLabels"])
 
         # Fetch projects, that are attached to the repo
-        projects = get_projects_from_repo(repository.orgName, repository.repoName, session)
+        projects = get_projects_from_repo(repo.orgName, repo.repoName, session)
 
         # Update unique_projects with main project structure for every project
         for project in projects:
@@ -224,7 +222,7 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                 project_number = project["number"]
 
                 # Get the raw output for field project options
-                raw_field_options = get_project_option_fields(repository.orgName, repository.repoName, project_number, session)
+                raw_field_options = get_project_option_fields(repo.orgName, repo.repoName, project_number, session)
 
                 # Convert the raw field options output to a sanitized dict version
                 sanitized_field_options = sanitize_field_options(raw_field_options)
@@ -234,15 +232,15 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                     "ID": project_id,
                     "Number": project_number,
                     "Title": project_title,
-                    "Owner": repository.orgName,
-                    "RepositoriesFromConfig": [repository.repoName],
+                    "Owner": repo.orgName,
+                    "RepositoriesFromConfig": [repo.repoName],
                     "ProjectRepositories": [],
                     "Issues": [],
                     "FieldOptions": sanitized_field_options
                 }
             else:
                 # If the project already exists, update the `RepositoriesFromConfig` list
-                unique_projects[project_id]["RepositoriesFromConfig"].append(repository.orgName)
+                unique_projects[project_id]["RepositoriesFromConfig"].append(repo.orgName)
 
     return unique_projects
 
@@ -374,6 +372,7 @@ def main() -> None:
     github_token = os.getenv('GITHUB_TOKEN')
     repositories = os.getenv('REPOSITORIES')
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
+    # TODO: Implement this mentioned feature, that filter just some projects
     # projects_title_filter = os.getenv('PROJECTS_TITLE_FILTER')
 
     # Parse the boolean values

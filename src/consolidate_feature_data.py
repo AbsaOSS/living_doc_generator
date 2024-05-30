@@ -14,6 +14,7 @@ import json
 from copy import deepcopy
 from typing import List, Dict, Set, Tuple
 from utils import ensure_folder_exists, save_state_to_json_file
+from containers import Repository
 
 OUTPUT_DIRECTORY = "../data/feature_consolidation"
 FEATURE_DIRECTORY = "../data/fetched_data/feature_data"
@@ -149,7 +150,7 @@ def consolidate_features_with_project() -> Tuple[List[dict], Set[str]]:
     return consolidated_features_with_project, set_of_used_repos
 
 
-def consolidate_features_without_project(repositories: List[dict],
+def consolidate_features_without_project(repositories: List[Repository],
                                          set_of_used_repos: Set[str],
                                          project_state_mining_switch: bool) -> List[dict]:
     """
@@ -166,12 +167,14 @@ def consolidate_features_without_project(repositories: List[dict],
 
     # Iterate over all repositories from config file
     for repository in repositories:
-        repo_name = repository["repoName"]
+        repo = Repository(orgName=repository["orgName"],
+                          repoName=repository["repoName"],
+                          queryLabels=repository["queryLabels"])
 
         # Check if there are repositories without project
-        if repo_name not in set_of_used_repos:
-            print(f"Processing repository without project: {repo_name}...")
-            feature_data = load_feature_json_data(FEATURE_DIRECTORY, repo_name)
+        if repo.repoName not in set_of_used_repos:
+            print(f"Processing repository without project: {repo.repoName}...")
+            feature_data = load_feature_json_data(FEATURE_DIRECTORY, repo.repoName)
 
             # Create a new list to store features
             modified_features = []
