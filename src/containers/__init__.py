@@ -15,19 +15,19 @@ class Repository:
 class Issue:
     number: int
     owner: str
-    repository_name: str
+    repositoryName: str
     title: str
     state: str
     url: str
     body: str
-    created_at: str
-    updated_at: str
-    closed_at: Optional[str]
-    milestone_number: Union[str, int]
-    milestone_title: str
-    milestone_html_url: str
+    createdAt: str
+    updatedAt: str
+    closedAt: Optional[str]
+    milestoneNumber: Union[str, int]
+    milestoneTitle: str
+    milestoneHtmlUrl: str
     labels: List[str]
-    page_filename: str
+    pageFilename: str
 
     def to_dict(self):
         return asdict(self)

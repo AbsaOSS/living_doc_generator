@@ -173,7 +173,7 @@ def generate_md_feature_file(page_template: str, feature: Dict[str, Any], output
     # Run through all replacements and update template with adequate content
     feature_md_page = replace_template_placeholders(page_template, replacements)
 
-    page_name = feature["PageFilename"]
+    page_name = feature["pageFilename"]
 
     # Save the feature markdown page
     with open(os.path.join(output_directory, page_name), 'w', encoding='utf-8') as feature_file:
@@ -222,7 +222,7 @@ def group_features_by_milestone(features: List[Dict[str, Any]]) -> Dict[str, Lis
     milestones = {}
 
     for feature in features:
-        milestone_title = f"{feature['MilestoneTitle']}"
+        milestone_title = f"{feature['milestoneTitle']}"
 
         # Create a milestone structure if it does not exist
         if milestone_title not in milestones:

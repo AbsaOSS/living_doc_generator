@@ -12,6 +12,7 @@
     - [Page generator options](#page-generator-options)
 - [Action Outputs](#action-outputs)
 - [Project Setup](#project-setup)
+- [Run scripts locally](#run-scripts-locally)
 - [Run unit test](#run-unit-test)
 - [Deployment](#deployment)
 - [Features](#features)
@@ -160,7 +161,7 @@ Configure the action by customizing the following parameters based on your needs
       projects-title-filter: ["Community Outreach Initiatives", "Health Data Analysis"]
     ```
 
-### Page generator options 
+### Page generator options
 - **milestones-as-chapters** (optional, `default: false`)
   - **Description**: When set to **true**, milestones in the projects will be treated as chapters in the generated documentation.
   - **Usage**: Set to **true** to enable this feature.

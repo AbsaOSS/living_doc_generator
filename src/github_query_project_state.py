@@ -235,7 +235,7 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                     "Number": project_number,
                     "Title": project_title,
                     "Owner": repository.orgName,
-                    "RepositoriesFromConfig": [repository.orgName],
+                    "RepositoriesFromConfig": [repository.repoName],
                     "ProjectRepositories": [],
                     "Issues": [],
                     "FieldOptions": sanitized_field_options

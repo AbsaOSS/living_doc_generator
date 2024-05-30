@@ -72,9 +72,9 @@ def merge_feature_and_project_data(feature_data: List[dict],
 
     # For each feature, add feature data from project
     for feature in feature_data:
-        owner = feature['Owner']
-        repo_name = feature['RepositoryName']
-        feature_number = feature['Number']
+        owner = feature['owner']
+        repo_name = feature['repositoryName']
+        feature_number = feature['number']
 
         # Create a key for feature with repo name and issue number
         string_key = make_unique_string_key(owner, repo_name, feature_number)

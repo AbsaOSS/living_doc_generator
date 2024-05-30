@@ -192,19 +192,19 @@ def process_issues(loaded_issues: List[dict], org_name: str, repo_name: str) -> 
         issue_object = Issue(
             number=issue['number'],
             owner=org_name,
-            repository_name=repo_name,
+            repositoryName=repo_name,
             title=issue['title'],
             state=issue['state'],
             url=issue['html_url'],
             body=issue['body'],
-            created_at=issue['created_at'],
-            updated_at=issue['updated_at'],
-            closed_at=issue['closed_at'],
-            milestone_number=milestone_number,
-            milestone_title=milestone_title,
-            milestone_html_url=milestone_html_url,
+            createdAt=issue['created_at'],
+            updatedAt=issue['updated_at'],
+            closedAt=issue['closed_at'],
+            milestoneNumber=milestone_number,
+            milestoneTitle=milestone_title,
+            milestoneHtmlUrl=milestone_html_url,
             labels=label_names,
-            page_filename=sanitized_md_filename
+            pageFilename=sanitized_md_filename
         )
 
         # Convert Issue object to dictionary, because JSON does not support dataclasses
