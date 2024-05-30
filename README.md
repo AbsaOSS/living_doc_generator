@@ -8,11 +8,11 @@
     - [Environment Variables](#environment-variables)
     - [Inputs](#inputs)
     - [Features de/activation](#features-deactivation)
-    - [Features configuration](#features-configuration)
-    - [Page generator options](#page-generator-options)
+    - [Features Configuration](#features-configuration)
+    - [Page Generator Options](#page-generator-options)
 - [Action Outputs](#action-outputs)
 - [Project Setup](#project-setup)
-- [Run scripts locally](#run-scripts-locally)
+- [Run Scripts Locally](#run-scripts-locally)
 - [Run unit test](#run-unit-test)
 - [Deployment](#deployment)
 - [Features](#features)
@@ -151,7 +151,7 @@ Configure the action by customizing the following parameters based on your needs
       project-state-mining: false
     ```
     
-### Features configuration
+### Features Configuration
 - **projects-title-filter** (optional, `default: []`)
   - **Description**: Filters the projects by titles. Only projects with these titles will be considered.
   - **Usage**: Provide a list of project titles to filter.
@@ -161,7 +161,7 @@ Configure the action by customizing the following parameters based on your needs
       projects-title-filter: ["Community Outreach Initiatives", "Health Data Analysis"]
     ```
 
-### Page generator options
+### Page Generator Options
 - **milestones-as-chapters** (optional, `default: false`)
   - **Description**: When set to **true**, milestones in the projects will be treated as chapters in the generated documentation.
   - **Usage**: Set to **true** to enable this feature.
@@ -212,7 +212,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run scripts locally
+## Run Scripts Locally
 If you need to run the scripts locally, follow these steps:
 
 ### Create the shell script
@@ -240,27 +240,23 @@ export REPOSITORIES='[
               "queryLabels": ["feature", "bug"]
             }
           ]'
-export DATA_DIRECTORY="../data"
-export OUTPUT_DIRECTORY="../output"
+export OUTPUT_DIRECTORY="/output/directory/path
 ```
 
 ### Running the script locally
-Incorporate these commands into the shell script and rename the script as necessary:
+For running the GitHub action incorporate these commands into the shell script and save it.
 ```
 cd src || exit 1
 
-python3 <name-of-python-script.py> --github-token "$GITHUB_TOKEN" \
+python3 controller.py --github-token "$GITHUB_TOKEN" \
             --project-state-mining "$PROJECT_STATE_MINING" \
             --projects-title-filter "$PROJECTS_TITLE_FILTER" \
             --milestones-as-chapters "$MILESTONES_AS_CHAPTERS" \
             --repositories "$REPOSITORIES" \
-            --data-directory "$DATA_DIRECTORY" \
             --output-directory "$OUTPUT_DIRECTORY"
 
 cd .. || exit 1
 ```
-
-For running the whole GitHub action, choose `controller.py` as the python script.
 
 ### Make the Script Executable
 From the terminal that is in the root of this project, make the script executable:

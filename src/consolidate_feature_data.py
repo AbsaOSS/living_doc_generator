@@ -13,7 +13,7 @@ import os
 import json
 from copy import deepcopy
 from typing import List, Dict, Set, Tuple
-from utils import parse_arguments, ensure_folder_exists, save_state_to_json_file
+from utils import ensure_folder_exists, save_state_to_json_file
 
 OUTPUT_DIRECTORY = "../data/feature_consolidation"
 FEATURE_DIRECTORY = "../data/fetched_data/feature_data"

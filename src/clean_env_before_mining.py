@@ -10,6 +10,7 @@ The script can be run from the command line:
 import os
 import shutil
 
+DATA_DIRECTORY = "../data"
 
 def clean_directory_content(script_dir: str, directory: str) -> None:
     """
@@ -37,15 +38,14 @@ def clean_environment() -> None:
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Remove generated data and output from the directories
-    data_directory = os.environ['DATA_DIRECTORY']
+    # Get output directory from the env variables
     output_directory = os.environ['OUTPUT_DIRECTORY']
 
     # Clean the directory content for generated data and output
-    clean_directory_content(script_dir, data_directory)
+    clean_directory_content(script_dir, DATA_DIRECTORY)
     clean_directory_content(script_dir, output_directory)
 
-    print("Cleaning of env for Living Documentation ended")
+    print("Cleaning environment for Living Documentation ended")
 
 
 if __name__ == "__main__":
