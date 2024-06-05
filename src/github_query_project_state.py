@@ -11,7 +11,7 @@ import json
 import os
 from typing import Dict, List
 from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
-from containers import Repository
+from containers import Repository, ProjectIssue, Project
 
 OUTPUT_DIRECTORY = "../data/fetched_data/project_data"
 ISSUE_PER_PAGE = 100
@@ -228,16 +228,14 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                 sanitized_field_options = sanitize_field_options(raw_field_options)
 
                 # Primary project structure
-                unique_projects[project_id] = {
-                    "ID": project_id,
-                    "Number": project_number,
-                    "Title": project_title,
-                    "Owner": repo.orgName,
-                    "RepositoriesFromConfig": [repo.repoName],
-                    "ProjectRepositories": [],
-                    "Issues": [],
-                    "FieldOptions": sanitized_field_options
-                }
+                unique_projects[project_id] = Project(
+                    ID=project_id,
+                    Number=project_number,
+                    Title=project_title,
+                    Owner=repo.orgName,
+                    RepositoriesFromConfig=[repo.repoName],
+                    FieldOptions=sanitized_field_options
+                )
             else:
                 # If the project already exists, update the `RepositoriesFromConfig` list
                 unique_projects[project_id]["RepositoriesFromConfig"].append(repo.orgName)
@@ -301,7 +299,7 @@ def process_projects(unique_projects: Dict[str, dict], session: requests.session
     # Update every project with adequate issue data
     for project_id, project_state in unique_projects.items():
         attached_repos = []
-        project_title = project_state["Title"]
+        project_title = project_state.Title
 
         print(f"Loaded project: `{project_title}`")
         print(f"Processing issues...")
@@ -326,38 +324,41 @@ def process_projects(unique_projects: Dict[str, dict], session: requests.session
                         issue_field_types.append(node['name'])
 
                 # Initialize a dictionary for the issue
-                project_issue = {
-                    "Number": number,
-                    "Owner": owner,
-                    "RepositoryName": repo_name,
-                    "Title": title,
-                    "State": state
-                }
+                project_issue = ProjectIssue(
+                    Number=number,
+                    Owner=owner,
+                    RepositoryName=repo_name,
+                    Title=title,
+                    State=state
+                )
 
-                issue_repo_name = project_issue["RepositoryName"]
+                issue_repo_name = project_issue.RepositoryName
 
                 # Updating the ProjectRepositories
                 if issue_repo_name != "N/A":
                     if issue_repo_name not in attached_repos:
-                        project_state['ProjectRepositories'].append(issue_repo_name)
+                        project_state.ProjectRepositories.append(issue_repo_name)
                         attached_repos.append(issue_repo_name)
 
                 # Prepare the field options structure for usage
-                field_options = unique_projects[project_id]["FieldOptions"]
+                field_options = unique_projects[project_id].FieldOptions
 
                 # Add the field types to the issue dictionary
                 for field_type in issue_field_types:
                     # Look if issue field is in the field options
                     for name, options in field_options.items():
                         if field_type in options:
-                            project_issue.update({name: field_type})
+                            setattr(project_issue, name, field_type)
+
+                project_issue = project_issue.to_dict()
 
                 # Add the issue to the project state
-                project_state['Issues'].append(project_issue)
+                project_state.Issues.append(project_issue)
+
             else:
                 print(f"Warning: 'content' key missing or None in issue: {issue}")
 
-        print(f"Processed {len(project_state['Issues'])} project issues in total.")
+        print(f"Processed {len(project_state.Issues)} project issues in total.")
 
         # Add the project state to the dictionary
         project_states.update({project_title: project_state})
@@ -408,6 +409,7 @@ def main() -> None:
 
     # Save project states to the unique JSON files
     for project_title, project_state in project_states.items():
+        project_state = project_state.to_dict()
         output_file_name = save_state_to_json_file(project_state, "project", OUTPUT_DIRECTORY, project_title)
         print(f"Project's '{project_title}' Issue state saved into file: {output_file_name}.")
 
