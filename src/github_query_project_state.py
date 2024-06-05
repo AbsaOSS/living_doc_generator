@@ -188,7 +188,7 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
         repo.load_from_json(repository)
 
         # Fetch projects, that are attached to the repo
-        fetched_projects = get_projects_from_repo(repo.organizationName, repo.repositoryName, session)
+        fetched_projects = get_projects_from_repo(repo.organization_name, repo.repository_name, session)
 
         # Update unique_projects with main project structure for every project
         for fetched_project in fetched_projects:
@@ -197,13 +197,13 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
             # Ensure project is unique and add its structure to unique projects
             if project_id not in unique_projects:
                 project = Project()
-                project.load_from_json(fetched_project, repo.organizationName)
+                project.load_from_json(fetched_project, repo.organization_name)
 
                 # Primary project structure
                 unique_projects[project.id] = project
             else:
                 # If the project already exists, update the `RepositoriesFromConfig` list
-                unique_projects[project.id][project.repositoriesFromConfig].append(repo.organizationName)
+                unique_projects[project.id][project.repositoriesFromConfig].append(repo.organization_name)
 
     return unique_projects
 

@@ -24,7 +24,7 @@ class Project:
 
 
         # Get the raw output for field project options
-        raw_field_options = get_project_option_fields(repo.organizationName, repo.repositoryName, project_number,
+        raw_field_options = get_project_option_fields(repo.organization_name, repo.repository_name, project_number,
                                                       session)
 
         # Convert the raw field options output to a sanitized dict version

@@ -20,6 +20,23 @@ class Issue:
         self.labels: List[str] = []
         self.pageFilename: str = ""
 
+    def __dict__(self):
+        return {
+            "number": self.number,
+            "title": self.title,
+            "state": self.state,
+            "url": self.url,
+            "body": self.body,
+            "created_at": self.createdAt,
+            "updated_at": self.updatedAt,
+            "closed_at": self.closedAt,
+            "milestone_number": self.milestoneNumber,
+            "milestone_title": self.milestoneTitle,
+            "milestone_html_url": self.milestoneHtmlUrl,
+            "labels": [str(label) for label in self.labels],
+            "page_filename": self.pageFilename
+        }
+
     def load_from_json(self, issue):
         self.number = issue["number"]
         self.title = issue["title"]

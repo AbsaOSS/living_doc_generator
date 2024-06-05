@@ -3,9 +3,9 @@ from typing import List
 
 class Repository:
     def __init__(self):
-        self.organizationName: str = ""
-        self.repositoryName: str = ""
-        self.queryLabels: List[str] = []
+        self.organization_name: str = ""
+        self.repository_name: str = ""
+        self.query_labels: List[str] = []
 
     def load_from_json(self, repository):
         for key in ["orgName", "repoName", "queryLabels"]:
@@ -18,6 +18,6 @@ class Repository:
         if not isinstance(repository["queryLabels"], list) or not all(isinstance(i, str) for i in repository["queryLabels"]):
             raise ValueError("'queryLabels' should be a list of strings.")
 
-        self.organizationName = repository["orgName"]
-        self.repositoryName = repository["repoName"]
-        self.queryLabels = repository["queryLabels"]
+        self.organization_name = repository["orgName"]
+        self.repository_name = repository["repoName"]
+        self.query_labels = repository["queryLabels"]
