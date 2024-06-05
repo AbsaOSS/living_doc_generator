@@ -210,7 +210,7 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                           queryLabels=repository["queryLabels"])
 
         # Fetch projects, that are attached to the repo
-        projects = get_projects_from_repo(repo.orgName, repo.repoName, session)
+        projects = get_projects_from_repo(repo.organizationName, repo.repositoryName, session)
 
         # Update unique_projects with main project structure for every project
         for project in projects:
@@ -222,7 +222,7 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                 project_number = project["number"]
 
                 # Get the raw output for field project options
-                raw_field_options = get_project_option_fields(repo.orgName, repo.repoName, project_number, session)
+                raw_field_options = get_project_option_fields(repo.organizationName, repo.repositoryName, project_number, session)
 
                 # Convert the raw field options output to a sanitized dict version
                 sanitized_field_options = sanitize_field_options(raw_field_options)
@@ -232,13 +232,13 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
                     ID=project_id,
                     Number=project_number,
                     Title=project_title,
-                    Owner=repo.orgName,
-                    RepositoriesFromConfig=[repo.repoName],
+                    Owner=repo.organizationName,
+                    RepositoriesFromConfig=[repo.repositoryName],
                     FieldOptions=sanitized_field_options
                 )
             else:
                 # If the project already exists, update the `RepositoriesFromConfig` list
-                unique_projects[project_id]["RepositoriesFromConfig"].append(repo.orgName)
+                unique_projects[project_id]["RepositoriesFromConfig"].append(repo.organizationName)
 
     return unique_projects
 

@@ -172,9 +172,9 @@ def consolidate_features_without_project(repositories: List[Repository],
                           queryLabels=repository["queryLabels"])
 
         # Check if there are repositories without project
-        if repo.repoName not in set_of_used_repos:
-            print(f"Processing repository without project: {repo.repoName}...")
-            feature_data = load_feature_json_data(FEATURE_DIRECTORY, repo.repoName)
+        if repo.repositoryName not in set_of_used_repos:
+            print(f"Processing repository without project: {repo.repositoryName}...")
+            feature_data = load_feature_json_data(FEATURE_DIRECTORY, repo.repositoryName)
 
             # Create a new list to store features
             modified_features = []

@@ -10,32 +10,16 @@ import requests
 import json
 import re
 import os
+
+from containers.issue import Issue
+from containers.repository import Repository
 from typing import Set, List
+
 from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
-from containers import Repository, Issue
+
 
 OUTPUT_DIRECTORY = "../data/fetched_data/feature_data"
 ISSUE_PER_PAGE = 100
-
-
-def sanitize_filename(filename: str) -> str:
-    """
-    Sanitizes the provided filename by removing invalid characters and replacing spaces with underscores.
-
-    @param filename: The filename to be sanitized.
-
-    @return: The sanitized filename.
-    """
-    # Remove invalid characters for Windows filenames
-    sanitized_name = re.sub(r'[<>:"/|?*`]', '', filename)
-    # Reduce consecutive periods
-    sanitized_name = re.sub(r'\.{2,}', '.', sanitized_name)
-    # Reduce consecutive spaces to a single space
-    sanitized_name = re.sub(r' {2,}', ' ', sanitized_name)
-    # Replace space with '_'
-    sanitized_name = sanitized_name.replace(' ', '_')
-
-    return sanitized_name
 
 
 def save_issue_without_duplicates(issue: dict, loaded_issues: List[dict], added_issue_numbers: Set[int]) -> None:
@@ -66,9 +50,9 @@ def get_base_endpoint(label_name: str, repo: Repository) -> str:
     @return: The base endpoint for fetching issues.
     """
     if label_name is None:
-        search_query = f"repo:{repo.orgName}/{repo.repoName} is:issue"
+        search_query = f"repo:{repo.organizationName}/{repo.repositoryName} is:issue"
     else:
-        search_query = f"repo:{repo.orgName}/{repo.repoName} is:issue label:{label_name}"
+        search_query = f"repo:{repo.organizationName}/{repo.repositoryName} is:issue label:{label_name}"
 
     base_endpoint = f"https://api.github.com/search/issues?q={search_query}&per_page={ISSUE_PER_PAGE}"
 
@@ -172,39 +156,9 @@ def process_issues(loaded_issues: List[dict], repo: Repository) -> List[Issue]:
     """
     processed_issues = []
 
-    for issue in loaded_issues:
-        milestone = issue.get('milestone', {})
-        milestone_number = milestone['number'] if milestone else "No milestone"
-        milestone_title = milestone['title'] if milestone else "No milestone"
-        milestone_html_url = milestone['html_url'] if milestone else "No milestone"
-
-        labels = issue.get('labels', [])
-        label_names = [label['name'] for label in labels]
-
-        md_filename_base = f"{issue['number']}_{issue['title'].lower()}.md"
-        sanitized_md_filename = sanitize_filename(md_filename_base)
-
-        # Define Issue object as it follows the Issue dataclass
-        issue_object = Issue(
-            number=issue['number'],
-            owner=repo.orgName,
-            repositoryName=repo.repoName,
-            title=issue['title'],
-            state=issue['state'],
-            url=issue['html_url'],
-            body=issue['body'],
-            createdAt=issue['created_at'],
-            updatedAt=issue['updated_at'],
-            closedAt=issue['closed_at'],
-            milestoneNumber=milestone_number,
-            milestoneTitle=milestone_title,
-            milestoneHtmlUrl=milestone_html_url,
-            labels=label_names,
-            pageFilename=sanitized_md_filename
-        )
-
-        # Convert Issue object to dictionary, because JSON does not support dataclasses
-        issue = issue_object.to_dict()
+    for loaded_issue in loaded_issues:
+        issue = Issue(repo.repositoryName, repo.organizationName)
+        issue.load_from_json(loaded_issue)
         processed_issues.append(issue)
 
     return processed_issues
@@ -215,11 +169,11 @@ def main() -> None:
 
     # Get environment variables from the controller script
     github_token = os.getenv('GITHUB_TOKEN')
-    repositories = os.getenv('REPOSITORIES')
+    repositories_raw = os.getenv('REPOSITORIES')
 
     # Parse repositories JSON string
     try:
-        repositories = json.loads(repositories)
+        repositories_raw = json.loads(repositories_raw)
     except json.JSONDecodeError as e:
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
@@ -229,12 +183,11 @@ def main() -> None:
     ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
 
     # Run the function for every given repository
-    for repository in repositories:
-        repo = Repository(orgName=repository["orgName"],
-                          repoName=repository["repoName"],
-                          queryLabels=repository["queryLabels"])
+    for repository in repositories_raw:
+        repo = Repository()
+        repo.load_from_json(repository)
 
-        print(f"Downloading issues from repository `{repo.orgName}/{repo.repoName}`.")
+        print(f"Downloading issues from repository `{repo.organizationName}/{repo.repositoryName}`.")
 
         # Load Issues from repository
         loaded_issues = get_issues_from_repository(repo, github_token)
@@ -243,7 +196,8 @@ def main() -> None:
         processed_issues = process_issues(loaded_issues, repo)
 
         # Save issues from one repository to the unique JSON file
-        output_file_name = save_state_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repoName)
+        # output_file_name = save_issues_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repositoryName)
+        output_file_name = save_state_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repositoryName)
         print(f"Saved {len(processed_issues)} issues to {output_file_name}.")
 
     print("Script for downloading issues from GitHub API ended.")
