@@ -1,14 +1,12 @@
 import re
-
-from dataclasses import asdict
 from typing import List, Optional, Union
 
 
 class Issue:
-    def __init__(self, repositoryName: str, organizationName: str):
+    def __init__(self, organization_name: str, repository_name: str):
         self.number: int = 0
-        self.organizationName: str = organizationName
-        self.repositoryName: str = repositoryName
+        self.organizationName: str = organization_name
+        self.repositoryName: str = repository_name
         self.title: str = ""
         self.state: str = ""
         self.url: str = ""
@@ -22,29 +20,14 @@ class Issue:
         self.labels: List[str] = []
         self.pageFilename: str = ""
 
-    def to_dict(self):
-        return asdict(self)
-
     def load_from_json(self, issue):
-        for key in ["number", "owner", "repositoryName", "title", "state", "url", "body", "createdAt", "updatedAt"]:
-            if key not in issue:
-                raise ValueError(f"Key '{key}' is missing in the input dictionary.")
-
-        if not isinstance(issue["number"], int):
-            raise ValueError("'number' should be of type int.")
-
-        if not all(isinstance(issue[key], str) for key in ["owner", "repositoryName", "title", "state", "url", "body", "createdAt", "updatedAt"]):
-            raise ValueError("'owner', 'repositoryName', 'title', 'state', 'url', 'body', 'createdAt', 'updatedAt' should be of type string.")
-
         self.number = issue["number"]
-        self.organizationName = issue["owner"]
-        self.repositoryName = issue["repositoryName"]
         self.title = issue["title"]
         self.state = issue["state"]
         self.url = issue["url"]
         self.body = issue["body"]
-        self.createdAt = issue["createdAt"]
-        self.updatedAt = issue["updatedAt"]
+        self.createdAt = issue["created_at"]
+        self.updatedAt = issue["updated_at"]
 
         md_filename_base = f"{issue['number']}_{issue['title'].lower()}.md"
         self.pageFilename = self.__sanitize_filename(md_filename_base)
@@ -53,12 +36,23 @@ class Issue:
         self.labels = [label['name'] for label in labels]
 
         if "closedAt" in issue:
-            self.closedAt = issue["closedAt"]
+            self.closedAt = issue["closed_at"]
 
         milestone = issue.get('milestone', {})
-        self.milestoneTitle = issue["milestoneTitle"] if milestone else "No milestone"
-        self.milestoneHtmlUrl = issue["milestoneHtmlUrl"] if milestone else "No milestone"
-        self.milestoneNumber = issue["milestoneNumber"] if milestone else "No milestone"
+        self.milestoneTitle = milestone["title"] if milestone else "No milestone"
+        self.milestoneHtmlUrl = milestone["html_url"] if milestone else "No milestone"
+        self.milestoneNumber = milestone["number"] if milestone else "No milestone"
+
+        # Generated
+        for key in ["number", "title", "state", "url", "body", "created_at", "updated_at"]:
+            if key not in issue:
+                raise ValueError(f"Key '{key}' is missing in the input dictionary.")
+
+        if not isinstance(issue["number"], int):
+            raise ValueError("'number' should be of type int.")
+
+        if not all(isinstance(issue[key], str) for key in ["title", "state", "url", "body", "created_at", "updated_at"]):
+            raise ValueError("'owner', 'title', 'state', 'url', 'body', 'createdAt', 'updatedAt' should be of type string.")
 
     def __sanitize_filename(self, filename: str) -> str:
         """

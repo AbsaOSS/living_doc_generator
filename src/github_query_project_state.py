@@ -10,8 +10,12 @@ import requests
 import json
 import os
 from typing import Dict, List
-from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
-from containers import Repository, ProjectIssue, Project
+
+from utils import ensure_folder_exists, save_issues_to_json_file, initialize_request_session
+
+from containers.project import Project
+from containers.project_issue import ProjectIssue
+from containers.repository import Repository
 
 OUTPUT_DIRECTORY = "../data/fetched_data/project_data"
 ISSUE_PER_PAGE = 100
@@ -143,31 +147,6 @@ def get_projects_from_repo(org_name: str, repo_name: str, session: requests.sess
     return projects
 
 
-def get_project_option_fields(org_name: str, repo_name: str, project_number: str, session: requests.sessions.Session) -> List[dict]:
-    """
-    Fetches the option fields for a given project using a GraphQL query like size or priority.
-    If the response is empty, it returns an empty list.
-
-    @param org_name: The organization / owner name.
-    @param repo_name: The repository name.
-    @param project_number: The project number.
-    @param session: A configured request session.
-
-    @return: The raw list output of option fields for the project.
-    """
-    # Fetch the GraphQL response with option fields used in a project
-    project_option_fields_query = PROJECT_OPTION_FIELDS_QUERY.format(org_name=org_name, repo_name=repo_name, project_number=project_number)
-    option_field_response = send_graphql_query(project_option_fields_query, session)
-
-    # Return empty list, if project does not use option fields
-    if len(option_field_response) == 0:
-        return []
-
-    raw_field_options = option_field_response['repository']['projectV2']['fields']['nodes']
-
-    return raw_field_options
-
-
 def sanitize_field_options(raw_field_options: List[dict]) -> Dict[str, List[str]]:
     """
     Converts the raw field options output to a formated dictionary.
@@ -205,40 +184,26 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
 
     # Process every repo from repos input
     for repository in repositories:
-        repo = Repository(orgName=repository["orgName"],
-                          repoName=repository["repoName"],
-                          queryLabels=repository["queryLabels"])
+        repo = Repository()
+        repo.load_from_json(repository)
 
         # Fetch projects, that are attached to the repo
-        projects = get_projects_from_repo(repo.organizationName, repo.repositoryName, session)
+        fetched_projects = get_projects_from_repo(repo.organizationName, repo.repositoryName, session)
 
         # Update unique_projects with main project structure for every project
-        for project in projects:
-            project_id = project["id"]
+        for fetched_project in fetched_projects:
+            project_id = fetched_project["id"]
 
             # Ensure project is unique and add its structure to unique projects
             if project_id not in unique_projects:
-                project_title = project["title"]
-                project_number = project["number"]
-
-                # Get the raw output for field project options
-                raw_field_options = get_project_option_fields(repo.organizationName, repo.repositoryName, project_number, session)
-
-                # Convert the raw field options output to a sanitized dict version
-                sanitized_field_options = sanitize_field_options(raw_field_options)
+                project = Project()
+                project.load_from_json(fetched_project, repo.organizationName)
 
                 # Primary project structure
-                unique_projects[project_id] = Project(
-                    ID=project_id,
-                    Number=project_number,
-                    Title=project_title,
-                    Owner=repo.organizationName,
-                    RepositoriesFromConfig=[repo.repositoryName],
-                    FieldOptions=sanitized_field_options
-                )
+                unique_projects[project.id] = project
             else:
                 # If the project already exists, update the `RepositoriesFromConfig` list
-                unique_projects[project_id]["RepositoriesFromConfig"].append(repo.organizationName)
+                unique_projects[project.id][project.repositoriesFromConfig].append(repo.organizationName)
 
     return unique_projects
 
@@ -410,7 +375,7 @@ def main() -> None:
     # Save project states to the unique JSON files
     for project_title, project_state in project_states.items():
         project_state = project_state.to_dict()
-        output_file_name = save_state_to_json_file(project_state, "project", OUTPUT_DIRECTORY, project_title)
+        output_file_name = save_issues_to_json_file(project_state, "project", OUTPUT_DIRECTORY, project_title)
         print(f"Project's '{project_title}' Issue state saved into file: {output_file_name}.")
 
     print("Script for downloading project data from GitHub GraphQL ended.")

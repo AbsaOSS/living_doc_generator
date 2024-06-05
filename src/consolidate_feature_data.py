@@ -13,7 +13,7 @@ import os
 import json
 from copy import deepcopy
 from typing import List, Dict, Set, Tuple
-from utils import ensure_folder_exists, save_state_to_json_file
+from utils import ensure_folder_exists, save_issues_to_json_file
 from containers import Repository
 
 OUTPUT_DIRECTORY = "../data/feature_consolidation"
@@ -238,5 +238,5 @@ if __name__ == '__main__':
     ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
 
     # Save consolidated features into JSON file
-    output_file_name = save_state_to_json_file(consolidated_features, "consolidation", OUTPUT_DIRECTORY, "feature")
+    output_file_name = save_issues_to_json_file(consolidated_features, "consolidation", OUTPUT_DIRECTORY, "feature")
     print(f"Consolidated {len(consolidated_features)} features in total in {output_file_name}.")

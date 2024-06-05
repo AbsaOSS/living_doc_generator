@@ -1,18 +1,35 @@
-from dataclasses import dataclass, field, asdict
 from typing import List, Dict
+
 from .project_issue import ProjectIssue
 
 
-@dataclass
 class Project:
-    ID: str
-    Number: int
-    Title: str
-    Owner: str
-    RepositoriesFromConfig: List[str]
-    ProjectRepositories: List[str] = field(default_factory=list)
-    Issues: List[ProjectIssue] = field(default_factory=list)
-    FieldOptions: Dict[str, List[str]] = field(default_factory=dict)
+    def __init__(self):
+        self.id: str = ""
+        self.number: int = 0
+        self.title: str = ""
+        self.organizationName: str = ""
+        self.repositoriesFromConfig: List[str] = []
+        self.projectRepositories: List[str] = []
+        self.issues: List[ProjectIssue] = []
+        self.fieldOptions: Dict[str, List[str]] = {}
 
-    def to_dict(self):
-        return asdict(self)
+    def load_from_json(self, project, repo):
+        self.id = project["id"]
+        self.title = project["title"]
+        self.number = project["number"]
+        self.organizationName = repo.organization_name
+        self.repositoriesFromConfig = repo.repositories
+
+
+
+        # Get the raw output for field project options
+        raw_field_options = get_project_option_fields(repo.organizationName, repo.repositoryName, project_number,
+                                                      session)
+
+        # Convert the raw field options output to a sanitized dict version
+        sanitized_field_options = sanitize_field_options(raw_field_options)
+
+
+
+

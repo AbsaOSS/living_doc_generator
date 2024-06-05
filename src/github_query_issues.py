@@ -8,17 +8,16 @@ for each unique repository.
 
 import requests
 import json
-import re
 import os
 
 from containers.issue import Issue
 from containers.repository import Repository
 from typing import Set, List
 
-from utils import ensure_folder_exists, save_state_to_json_file, initialize_request_session
+from utils import ensure_folder_exists, save_issues_to_json_file, initialize_request_session
 
 
-OUTPUT_DIRECTORY = "../data/fetched_data/feature_data"
+OUTPUT_DIRECTORY = "../data/fetched_data/issue_data"
 ISSUE_PER_PAGE = 100
 
 
@@ -157,7 +156,7 @@ def process_issues(loaded_issues: List[dict], repo: Repository) -> List[Issue]:
     processed_issues = []
 
     for loaded_issue in loaded_issues:
-        issue = Issue(repo.repositoryName, repo.organizationName)
+        issue = Issue(repo.organizationName, repo.repositoryName)
         issue.load_from_json(loaded_issue)
         processed_issues.append(issue)
 
@@ -197,7 +196,7 @@ def main() -> None:
 
         # Save issues from one repository to the unique JSON file
         # output_file_name = save_issues_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repositoryName)
-        output_file_name = save_state_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repositoryName)
+        output_file_name = save_issues_to_json_file(processed_issues, "feature", OUTPUT_DIRECTORY, repo.repositoryName)
         print(f"Saved {len(processed_issues)} issues to {output_file_name}.")
 
     print("Script for downloading issues from GitHub API ended.")
