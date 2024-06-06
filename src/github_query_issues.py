@@ -100,12 +100,12 @@ def get_base_endpoint(label_name: str, repo: Repository) -> str:
 #     return issues
 
 
-def get_issues_from_repository(repo: Repository, github_token: str) -> List[Issue]:
+def get_issues_from_repository(repository: Repository, github_token: str) -> List[Issue]:
     """
     Fetches all issues from a GitHub repository using the GitHub REST API.
     If query_labels are not specified, all issues are fetched.
 
-    @param repo: The instance of Repository class.
+    @param repository: The instance of Repository class.
     @param github_token: The GitHub token.
 
     @return: The list of all fetched issues.
@@ -118,8 +118,8 @@ def get_issues_from_repository(repo: Repository, github_token: str) -> List[Issu
 
     # Fetch issues for each label
     # One session request per one label - TODO why?
-    for label_name in repo.query_labels:
-        base_endpoint = get_base_endpoint(label_name, repo)
+    for label_name in repository.query_labels:
+        base_endpoint = get_base_endpoint(label_name, repository)
         page = 1
 
         try:
@@ -136,8 +136,9 @@ def get_issues_from_repository(repo: Repository, github_token: str) -> List[Issu
                 fetched_issues_json = response.json()['items']
                 fetched_issues = []     # TODO create small method like filter_issues_by_numbers ==> return instead of []
                 for issue_json in fetched_issues_json:
-                    issue = Issue(repo.organization_name, repo.repository_name)
+                    issue = Issue(repository)
                     issue.load_from_json(issue_json)
+
                     fetched_issues.append(issue)
                 print(f"Loaded {len(fetched_issues)} issues for label `{label_name}`, page {page}.")
 

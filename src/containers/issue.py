@@ -1,75 +1,84 @@
 import re
-from typing import List, Optional, Union
+from typing import List, Optional
+
+from .repository import Repository
+from .milestone import Milestone
 
 
 class Issue:
-    def __init__(self, organization_name: str, repository_name: str):
+    def __init__(self, repository: Repository):
         self.number: int = 0
-        self.organizationName: str = organization_name
-        self.repositoryName: str = repository_name
+        self.organization_name: str = repository.organization_name
+        self.repository_name: str = repository.repository_name
         self.title: str = ""
         self.state: str = ""
         self.url: str = ""
         self.body: str = ""
-        self.createdAt: str = ""
-        self.updatedAt: str = ""
-        self.closedAt: Optional[str] = None
-        self.milestoneNumber: Union[str, int] = ""
-        self.milestoneTitle: str = ""
-        self.milestoneHtmlUrl: str = ""
+        self.created_at: str = ""
+        self.updated_at: str = ""
+        self.closed_at: Optional[str] = None
+        self.milestone_number: Optional[int] = None
+        self.milestone_title: Optional[str] = None
+        self.milestone_html_url: Optional[str] = None
         self.labels: List[str] = []
-        self.pageFilename: str = ""
+        self.page_filename: str = ""
 
-    def __dict__(self):
+    def to_dict(self):
         return {
             "number": self.number,
+            "organization_name": self.organization_name,
+            "repository_name": self.repository_name,
             "title": self.title,
             "state": self.state,
             "url": self.url,
             "body": self.body,
-            "created_at": self.createdAt,
-            "updated_at": self.updatedAt,
-            "closed_at": self.closedAt,
-            "milestone_number": self.milestoneNumber,
-            "milestone_title": self.milestoneTitle,
-            "milestone_html_url": self.milestoneHtmlUrl,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "closed_at": self.closed_at,
+            "milestone_number": self.milestone_number,
+            "milestone_title": self.milestone_title,
+            "milestone_html_url": self.milestone_html_url,
             "labels": [str(label) for label in self.labels],
-            "page_filename": self.pageFilename
+            "page_filename": self.page_filename
         }
 
     def load_from_json(self, issue):
+        for key in ["number", "title", "state", "url", "body", "created_at", "updated_at"]:
+            if key not in issue:
+                raise ValueError(f"Issue key '{key}' is missing in the input dictionary.")
+
+        if not isinstance(issue["number"], int):
+            raise ValueError("Issue value of 'number' should be of type int.")
+
+        string_keys_to_check = ["title", "state", "url", "body", "created_at", "updated_at"]
+        for key in string_keys_to_check:
+            if not isinstance(issue[key], str):
+                raise ValueError(f"Issue value of '{key}' should be of type string.")
+
         self.number = issue["number"]
         self.title = issue["title"]
         self.state = issue["state"]
         self.url = issue["url"]
         self.body = issue["body"]
-        self.createdAt = issue["created_at"]
-        self.updatedAt = issue["updated_at"]
+        self.created_at = issue["created_at"]
+        self.updated_at = issue["updated_at"]
+        self.closed_at = issue["closed_at"]
 
-        md_filename_base = f"{issue['number']}_{issue['title'].lower()}.md"
-        self.pageFilename = self.__sanitize_filename(md_filename_base)
+        milestone_json = issue['milestone']
+
+        if milestone_json is not None:
+            milestone = Milestone()
+            milestone.load_from_json(milestone_json)
+
+            self.milestone_number = milestone.number
+            self.milestone_title = milestone.title
+            self.milestone_html_url = milestone.html_url
 
         labels = issue.get('labels', [])
         self.labels = [label['name'] for label in labels]
 
-        if "closedAt" in issue:
-            self.closedAt = issue["closed_at"]
-
-        milestone = issue.get('milestone', {})
-        self.milestoneTitle = milestone["title"] if milestone else "No milestone"
-        self.milestoneHtmlUrl = milestone["html_url"] if milestone else "No milestone"
-        self.milestoneNumber = milestone["number"] if milestone else "No milestone"
-
-        # Generated
-        for key in ["number", "title", "state", "url", "body", "created_at", "updated_at"]:
-            if key not in issue:
-                raise ValueError(f"Key '{key}' is missing in the input dictionary.")
-
-        if not isinstance(issue["number"], int):
-            raise ValueError("'number' should be of type int.")
-
-        if not all(isinstance(issue[key], str) for key in ["title", "state", "url", "body", "created_at", "updated_at"]):
-            raise ValueError("'owner', 'title', 'state', 'url', 'body', 'createdAt', 'updatedAt' should be of type string.")
+        md_filename_base = f"{self.number}_{self.title.lower()}.md"
+        self.page_filename = self.__sanitize_filename(md_filename_base)
 
     def __sanitize_filename(self, filename: str) -> str:
         """

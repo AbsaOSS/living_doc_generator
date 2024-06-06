@@ -11,7 +11,6 @@ import requests
 from typing import List
 
 from containers.issue import Issue
-from containers.issue_encoder import IssueEncoder
 
 
 def initialize_request_session(github_token: str) -> requests.sessions.Session:
@@ -71,7 +70,7 @@ def save_issues_to_json_file(issues: List[Issue], object_type: str, output_direc
     # Save a file with correct output
     with open(output_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(
-            [issue.__dict__ for issue in issues],
+            [issue.to_dict() for issue in issues],
             json_file,
             ensure_ascii=False,
             indent=4)
