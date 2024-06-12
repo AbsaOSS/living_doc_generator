@@ -8,7 +8,7 @@ These functions can be imported and used in other src as needed.
 import os
 import json
 import requests
-from typing import List
+from typing import List, Dict
 
 from containers.issue import Issue
 

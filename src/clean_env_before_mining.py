@@ -12,6 +12,7 @@ import shutil
 
 DATA_DIRECTORY = "../data"
 
+
 def clean_directory_content(script_dir: str, directory: str) -> None:
     """
         Deletes all content from the specified directory.

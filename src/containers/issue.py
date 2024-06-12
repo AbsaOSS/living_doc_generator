@@ -17,9 +17,7 @@ class Issue:
         self.created_at: str = ""
         self.updated_at: str = ""
         self.closed_at: Optional[str] = None
-        self.milestone_number: Optional[int] = None
-        self.milestone_title: Optional[str] = None
-        self.milestone_html_url: Optional[str] = None
+        self.milestone: Optional[Milestone] = None
         self.labels: List[str] = []
         self.page_filename: str = ""
 
@@ -35,9 +33,9 @@ class Issue:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "closed_at": self.closed_at,
-            "milestone_number": self.milestone_number,
-            "milestone_title": self.milestone_title,
-            "milestone_html_url": self.milestone_html_url,
+            "milestone_number": self.milestone.number,
+            "milestone_title": self.milestone.title,
+            "milestone_html_url": self.milestone.html_url,
             "labels": [str(label) for label in self.labels],
             "page_filename": self.page_filename
         }
@@ -58,7 +56,7 @@ class Issue:
         self.number = issue["number"]
         self.title = issue["title"]
         self.state = issue["state"]
-        self.url = issue["url"]
+        self.url = issue["html_url"]
         self.body = issue["body"]
         self.created_at = issue["created_at"]
         self.updated_at = issue["updated_at"]
@@ -66,19 +64,28 @@ class Issue:
 
         milestone_json = issue['milestone']
 
-        if milestone_json is not None:
-            milestone = Milestone()
-            milestone.load_from_json(milestone_json)
+        # Have to initialize milestone before loading from JSON, so it has default values
+        self.milestone = Milestone()
 
-            self.milestone_number = milestone.number
-            self.milestone_title = milestone.title
-            self.milestone_html_url = milestone.html_url
+        if milestone_json is not None:
+            self.milestone.load_from_json(milestone_json)
 
         labels = issue.get('labels', [])
         self.labels = [label['name'] for label in labels]
 
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
         self.page_filename = self.__sanitize_filename(md_filename_base)
+
+    def filter_out_labels_in_description(self, label_name: str, issues: List['Issue']):
+        """
+        Filters out the issues with the description labels and appends them to the fetched_issues list.
+
+        @param label_name: The name of the label.
+        @param fetched_issues: The list of fetched issues.
+        """
+        for label in self.labels:
+            if label == label_name:
+                issues.append(self)
 
     def __sanitize_filename(self, filename: str) -> str:
         """

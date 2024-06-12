@@ -14,7 +14,9 @@ from containers.issue import Issue
 from containers.repository import Repository
 from typing import Set, List
 
-from utils import ensure_folder_exists, save_issues_to_json_file, initialize_request_session
+from utils import (ensure_folder_exists,
+                   save_issues_to_json_file,
+                   initialize_request_session)
 
 
 OUTPUT_DIRECTORY = "../data/fetched_data/issue_data"
@@ -27,8 +29,6 @@ def filter_issues_by_numbers(issues: List[Issue], added_issue_numbers: Set[int])
     Saves the provided issue to a list, ensuring that no duplicates are added.
     Done by checking the issue's id in a set of added issue ids.
 
-    @param issue: The issue to be saved.
-    @param loaded_issues: The list to load and save all issues.
     @param added_issue_numbers: The set of added issue ids.
 
     @return: None TODO
@@ -43,61 +43,24 @@ def filter_issues_by_numbers(issues: List[Issue], added_issue_numbers: Set[int])
     return filtered_issues, added_issue_numbers
 
 
-def get_base_endpoint(label_name: str, repo: Repository) -> str:
+def get_base_endpoint(label_name: str, repository: Repository) -> str:
     """
     Prepares the base endpoint for fetching issues from a GitHub repository.
     If the label name is not specified, the base endpoint is for fetching all issues.
 
     @param label_name: The name of the label.
-    @param repo: The repository object.
+    @param repository: The repository object.
 
     @return: The base endpoint for fetching issues.
     """
     if label_name is None:
-        search_query = f"repo:{repo.organization_name}/{repo.repository_name} is:issue"
+        search_query = f"repo:{repository.organization_name}/{repository.repository_name} is:issue"
     else:
-        search_query = f"repo:{repo.organization_name}/{repo.repository_name} is:issue label:{label_name}"
+        search_query = f"repo:{repository.organization_name}/{repository.repository_name} is:issue label:{label_name}"
 
     base_endpoint = f"https://api.github.com/search/issues?q={search_query}&per_page={ISSUE_PER_PAGE}"
 
     return base_endpoint
-
-
-# TODO delete
-# def process_issues_by_label(fetched_issues: List[dict], added_issue_numbers: Set[int], label_name: str) -> List[Issue]:
-#     """
-#     Processes the fetched issues and loads them to the list.
-#     It ensures that no duplicates are added by checking the issue's number.
-#
-#     @param fetched_issues: The list of fetched issues from the GitHub API.
-#     @param loaded_issues: The list to load and save all issues.
-#     @param added_issue_numbers: The set of added issue numbers.
-#     @param label_name: The name of the label used to filter issues.
-#
-#     @return: None
-#     """
-#     issues = []
-#
-#     # If there is no label specified, save all issues
-#     if label_name is None:
-#         print(f"Loaded {len(fetched_issues)} issues without specifying the label.")
-#
-#         for issue in fetched_issues:
-#             loaded_issues = filter_issues_by_numbers(issue, added_issue_numbers)
-#             issues.extend(loaded_issues)
-#
-#     else:
-#         print(f"Loaded {len(fetched_issues)} issues for label `{label_name}`.")
-#
-#         # Safe check, because of GH API not stable return
-#         for issue in fetched_issues:
-#             for label in issue["labels"]:
-#                 # Filter out issues, that have label name just in description
-#                 if label["name"] == label_name:
-#                     loaded_issues = filter_issues_by_numbers(issue, added_issue_numbers)
-#                     issues.extend(loaded_issues)
-#
-#     return issues
 
 
 def get_issues_from_repository(repository: Repository, github_token: str) -> List[Issue]:
@@ -116,9 +79,12 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
     # Initialize the request session
     session = initialize_request_session(github_token)
 
+    # Check if query_labels is empty, if so, set it to None to fetch all issues
+    labels_to_query = repository.query_labels if repository.query_labels else [None]
+
     # Fetch issues for each label
     # One session request per one label - TODO why?
-    for label_name in repository.query_labels:
+    for label_name in labels_to_query:
         base_endpoint = get_base_endpoint(label_name, repository)
         page = 1
 
@@ -132,22 +98,30 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
                 # Check if the request was successful
                 response.raise_for_status()
 
+                issues = []     # TODO create small method like filter_issues_by_numbers ==> return instead of []
+
                 # Parse json issue to Issue object
-                fetched_issues_json = response.json()['items']
-                fetched_issues = []     # TODO create small method like filter_issues_by_numbers ==> return instead of []
-                for issue_json in fetched_issues_json:
+                issues_json = response.json()['items']
+                for issue_json in issues_json:
                     issue = Issue(repository)
                     issue.load_from_json(issue_json)
 
-                    fetched_issues.append(issue)
-                print(f"Loaded {len(fetched_issues)} issues for label `{label_name}`, page {page}.")
+                    if label_name is not None:
+                        issue.filter_out_labels_in_description(label_name, issues)
+                    else:
+                        issues.append(issue)
+
+                if label_name is None:
+                    print(f"Loaded {len(issues)} issues, page {page}.")
+                else:
+                    print(f"Loaded {len(issues)} issues for label `{label_name}`, page {page}.")
 
                 # Filter issues with unique issue number
-                unique_issues, issue_numbers = filter_issues_by_numbers(fetched_issues, issue_numbers)
+                unique_issues, issue_numbers = filter_issues_by_numbers(issues, issue_numbers)
                 loaded_issues.extend(unique_issues)
 
                 # If we retrieved less than issue_per_page constant, it means we're on the last page
-                if len(fetched_issues_json) < ISSUE_PER_PAGE:
+                if len(issues_json) < ISSUE_PER_PAGE:
                     break
                 page += 1
 
@@ -160,26 +134,6 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
             break
 
     return loaded_issues
-
-
-# def process_issues(loaded_issues: List[dict], repo: Repository) -> List[Issue]:
-#     """
-#     Processes the fetched issues and prepares them for saving.
-#     Mandatory issue structure is generated here with all necessary fields.
-#
-#     @param loaded_issues: The list of loaded issues.
-#     @param repo: The repository object.
-#
-#     @return: The list of processed issues.
-#     """
-#     processed_issues = []
-#
-#     for loaded_issue in loaded_issues:
-#         issue = Issue(repo.organization_name, repo.repository_name)
-#         issue.load_from_json(loaded_issue)
-#         processed_issues.append(issue)
-#
-#     return processed_issues
 
 
 def main() -> None:
@@ -209,9 +163,6 @@ def main() -> None:
 
         # Load Issues from repository (unique for each repository)
         loaded_issues = get_issues_from_repository(repository, github_token)
-
-        # Process issues - TODO delete
-        # processed_issues = process_issues(loaded_issues, repository)
 
         # Save issues from one repository to the unique JSON file
         output_file_name = save_issues_to_json_file(loaded_issues, "feature", OUTPUT_DIRECTORY, repository.repository_name)
