@@ -1,31 +1,32 @@
-import json
-from typing import List
+import requests
+from typing import Dict
 
 
 class BaseContainer:
-    # TODO: There should be issues: List[Issue], but there is (most likely due to a circular import) error
-    def save_issues_to_json_file(self, issues: List["Issue"], object_type: str, output_directory: str, state_name: str) -> str:
+    @staticmethod
+    def send_graphql_query(query: str, session: requests.sessions.Session) -> Dict[str, dict]:
         """
-        Saves a list state to a JSON file.
+        Sends a GraphQL query to the GitHub API and returns the response.
+        If an HTTP error occurs, it prints the error and returns an empty dictionary.
 
-        @param issues: The list of issues ot be saved.
-        @param object_type: The object type of the state (e.g., 'feature', 'project').
-        @param output_directory: The directory, where the file will be saved.
-        @param state_name: The naming of the state.
+        @param query: The GraphQL query to be sent in f string format.
+        @param session: A configured request session.
 
-        @return: The name of the output file.
+        @return: The response from the GitHub GraphQL API in a dictionary format.
         """
-        # Prepare the unique saving naming
-        sanitized_name = state_name.lower().replace(" ", "_").replace("-", "_")
-        output_file_name = f"{sanitized_name}.{object_type}.json"
-        output_file_path = f"{output_directory}/{output_file_name}"
+        try:
+            # Fetch the response from the API
+            response = session.post('https://api.github.com/graphql', json={'query': query})
+            # Check if the request was successful
+            response.raise_for_status()
 
-        # Save a file with correct output
-        with open(output_file_path, 'w', encoding='utf-8') as json_file:
-            json.dump(
-                [issue.to_dict() for issue in issues],
-                json_file,
-                ensure_ascii=False,
-                indent=4)
+            return response.json()["data"]
 
-        return output_file_name
+        # Specific error handling for HTTP errors
+        except requests.HTTPError as http_err:
+            print(f"HTTP error occurred: {http_err}")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        return {}

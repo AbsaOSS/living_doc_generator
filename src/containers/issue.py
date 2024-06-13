@@ -4,6 +4,7 @@ from typing import List, Optional
 from .repository import Repository
 from .milestone import Milestone
 
+CONSTANT = "N/A"
 
 class Issue:
     def __init__(self, repository: Repository):
@@ -53,16 +54,16 @@ class Issue:
             if not isinstance(issue[key], str):
                 raise ValueError(f"Issue value of '{key}' should be of type string.")
 
-        self.number = issue["number"]
-        self.title = issue["title"]
-        self.state = issue["state"]
-        self.url = issue["html_url"]
-        self.body = issue["body"]
-        self.created_at = issue["created_at"]
-        self.updated_at = issue["updated_at"]
-        self.closed_at = issue["closed_at"]
+        self.number = issue.get("number", CONSTANT)
+        self.title = issue.get("title", CONSTANT)
+        self.state = issue.get("state", CONSTANT)
+        self.url = issue.get("url", CONSTANT)
+        self.body = issue.get("body", CONSTANT)
+        self.created_at = issue.get("created_at", CONSTANT)
+        self.updated_at = issue.get("updated_at", CONSTANT)
+        self.closed_at = issue.get("closed_at", None)
 
-        milestone_json = issue['milestone']
+        milestone_json = issue.get("milestone", None)
 
         # Have to initialize milestone before loading from JSON, so it has default values
         self.milestone = Milestone()
@@ -74,20 +75,21 @@ class Issue:
         self.labels = [label['name'] for label in labels]
 
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
-        self.page_filename = self.__sanitize_filename(md_filename_base)
+        self.page_filename = self.sanitize_filename(md_filename_base)
 
     def filter_out_labels_in_description(self, label_name: str, issues: List['Issue']):
         """
         Filters out the issues with the description labels and appends them to the fetched_issues list.
 
         @param label_name: The name of the label.
-        @param fetched_issues: The list of fetched issues.
+        @param issues: The list of fetched issues.
         """
         for label in self.labels:
             if label == label_name:
                 issues.append(self)
 
-    def __sanitize_filename(self, filename: str) -> str:
+    @staticmethod
+    def sanitize_filename(filename: str) -> str:
         """
         Sanitizes the provided filename by removing invalid characters and replacing spaces with underscores.
 

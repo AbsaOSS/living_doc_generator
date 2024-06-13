@@ -1,6 +1,6 @@
 from typing import List
 import requests
-from .fetched_project import FetchedProject
+from .gh_project import GHProject
 from .base_container import BaseContainer
 
 PROJECTS_FROM_REPO_QUERY = """
@@ -39,7 +39,7 @@ class Repository(BaseContainer):
         self.repository_name = repository["repoName"]
         self.query_labels = repository["queryLabels"]
 
-    def get_projects_from_repository(self, session: requests.sessions.Session) -> List[FetchedProject]:
+    def get_projects(self, session: requests.sessions.Session) -> List[GHProject]:
         """
         Fetches all projects from a repository using GraphQL query.
         If the response is empty, it returns an empty list.
@@ -60,10 +60,10 @@ class Repository(BaseContainer):
 
         if project_response_raw['repository'] is not None:
             project_response = project_response_raw['repository']['projectsV2']['nodes']
-            fetched_projects = [FetchedProject(id=project['id'], number=project['number'], title=project['title']) for
-                                project in project_response]
+            gh_projects = [GHProject(id=project['id'], number=project['number'], title=project['title'])
+                           for project in project_response]
         else:
             print(f"Warning: 'repository' key is None in response: {project_response_raw}")
-            fetched_projects = []
+            gh_projects = []
 
-        return fetched_projects
+        return gh_projects

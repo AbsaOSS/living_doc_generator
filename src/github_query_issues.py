@@ -15,7 +15,7 @@ from containers.repository import Repository
 from typing import Set, List
 
 from utils import (ensure_folder_exists,
-                   save_issues_to_json_file,
+                   save_to_json_file,
                    initialize_request_session)
 
 
@@ -112,9 +112,9 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
                         issues.append(issue)
 
                 if label_name is None:
-                    print(f"Loaded {len(issues)} issues, page {page}.")
+                    print(f"Loaded {len(issues)} issues.")
                 else:
-                    print(f"Loaded {len(issues)} issues for label `{label_name}`, page {page}.")
+                    print(f"Loaded {len(issues)} issues for label `{label_name}`.")
 
                 # Filter issues with unique issue number
                 unique_issues, issue_numbers = filter_issues_by_numbers(issues, issue_numbers)
@@ -165,7 +165,9 @@ def main() -> None:
         loaded_issues = get_issues_from_repository(repository, github_token)
 
         # Save issues from one repository to the unique JSON file
-        output_file_name = save_issues_to_json_file(loaded_issues, "feature", OUTPUT_DIRECTORY, repository.repository_name)
+        issues_to_save = [issue.to_dict() for issue in loaded_issues]
+
+        output_file_name = save_to_json_file(issues_to_save, "feature", OUTPUT_DIRECTORY, repository.repository_name)
         print(f"Saved {len(loaded_issues)} issues to {output_file_name}.")
 
     print("Script for downloading issues from GitHub API ended.")

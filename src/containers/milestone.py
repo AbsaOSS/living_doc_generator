@@ -18,7 +18,6 @@ class Milestone:
         if not isinstance(milestone["title"], str) or not isinstance(milestone["html_url"], str):
             raise ValueError("Milestone value of 'title' and 'html_url' should be of type string.")
 
-
         self.number = milestone["number"]
         self.title = milestone["title"]
         self.html_url = milestone["html_url"]

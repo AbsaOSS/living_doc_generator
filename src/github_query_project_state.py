@@ -11,166 +11,18 @@ import json
 import os
 from typing import Dict, List
 
-from utils import ensure_folder_exists, save_issues_to_json_file, initialize_request_session
+from utils import (ensure_folder_exists,
+                   save_to_json_file,
+                   initialize_request_session)
 
 from containers.project import Project
 from containers.project_issue import ProjectIssue
 from containers.repository import Repository
 
 OUTPUT_DIRECTORY = "../data/fetched_data/project_data"
-ISSUE_PER_PAGE = 100
-ISSUES_FROM_PROJECT_QUERY = """
-    query {{
-      node(id: "{project_id}") {{
-        ... on ProjectV2 {{
-          items(first: {issues_per_page}, {after_argument}) {{
-            pageInfo {{
-              endCursor
-              hasNextPage
-            }}
-            nodes {{
-              content {{
-                  ... on Issue {{
-                    title
-                    state
-                    number
-                    repository {{
-                      name
-                      owner {{
-                        login
-                      }}
-                    }}
-                  }}
-                }}
-              fieldValues(first: 100) {{
-                nodes {{
-                  __typename
-                  ... on ProjectV2ItemFieldSingleSelectValue {{
-                    name
-                  }}
-                }}
-              }}
-            }}
-          }}
-        }}
-      }}
-    }}
-    """
-PROJECTS_FROM_REPO_QUERY = """
-        query {{
-          repository(owner: "{org_name}", name: "{repo_name}") {{
-            projectsV2(first: 100) {{
-              nodes {{
-                id
-                number
-                title
-              }}
-            }}
-          }}
-        }}
-        """
-PROJECT_OPTION_FIELDS_QUERY = """
-        query {{
-          repository(owner: "{org_name}", name: "{repo_name}") {{
-            projectV2(number: {project_number}) {{
-              title
-              fields(first: 100) {{
-                nodes {{
-                  ... on ProjectV2SingleSelectField {{
-                    name
-                    options {{
-                      name
-                    }}
-                  }}
-                }}
-              }}
-            }}
-          }}
-        }}
-        """
 
 
-def send_graphql_query(query: str, session: requests.sessions.Session) -> Dict[str, dict]:
-    """
-    Sends a GraphQL query to the GitHub API and returns the response.
-    If an HTTP error occurs, it prints the error and returns an empty dictionary.
-
-    @param query: The GraphQL query to be sent in f string format.
-    @param session: A configured request session.
-
-    @return: The response from the GitHub GraphQL API in a dictionary format.
-    """
-    try:
-        # Fetch the response from the API
-        response = session.post('https://api.github.com/graphql', json={'query': query})
-        # Check if the request was successful
-        response.raise_for_status()
-
-        return response.json()["data"]
-
-    # Specific error handling for HTTP errors
-    except requests.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    return {}
-
-
-def get_projects_from_repo(org_name: str, repo_name: str, session: requests.sessions.Session) -> List[dict]:
-    """
-    Fetches all projects from a given GitHub repository using GraphQL query.
-    If the response is empty, it returns an empty list.
-
-    @param org_name: The organization / owner name.
-    @param repo_name: The repository name for getting attached projects.
-    @param session: A configured request session.
-
-    @return: The list of all projects attached to the repository.
-    """
-
-    # Fetch the GraphQL response with projects attached to the repository
-    projects_from_repo_query = PROJECTS_FROM_REPO_QUERY.format(org_name=org_name, repo_name=repo_name)
-    project_response = send_graphql_query(projects_from_repo_query, session)
-
-    # Return empty list, if repo has no project attached
-    if len(project_response) == 0:
-        return []
-
-    if project_response['repository'] is not None:
-        projects = project_response['repository']['projectsV2']['nodes']
-    else:
-        print(f"Warning: 'repository' key is None in response: {project_response}")
-        projects = []
-
-    return projects
-
-
-def sanitize_field_options(raw_field_options: List[dict]) -> Dict[str, List[str]]:
-    """
-    Converts the raw field options output to a formated dictionary.
-    The dictionary keys are the field names and the values are lists of options.
-
-    @param raw_field_options: The raw field options output.
-
-    @return: The field options for a project as a dictionary.
-    """
-    field_options = {}
-
-    # Make a sanitized dict with field names and its options
-    for field_option in raw_field_options:
-        if "name" in field_option and "options" in field_option:
-            field_name = field_option["name"]
-            options = [option["name"] for option in field_option["options"]]
-
-            # Update the dict with every unique field
-            field_options.update({field_name: options})
-
-    return field_options
-
-
-def get_unique_projects(repositories: List[Repository], session: requests.sessions.Session) -> Dict[str, dict]:
+def get_unique_projects(repositories: List[Repository], session: requests.sessions.Session) -> Dict[str, Project]:
     """
     Generate a main structure for every unique project.
     Connects project with the repositories.
@@ -180,81 +32,35 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
 
     @return: The unique project structure as a dictionary.
     """
-    unique_projects = {}
+    projects = {}
 
-    # Process every repo from repos input
     for repository in repositories:
-        repo = Repository()
-        repo.load_from_json(repository)
-
         # Fetch projects, that are attached to the repo
-        fetched_projects = get_projects_from_repo(repo.organization_name, repo.repository_name, session)
+        gh_projects = repository.get_projects(session)
 
         # Update unique_projects with main project structure for every project
-        for fetched_project in fetched_projects:
-            project_id = fetched_project["id"]
+        for gh_project in gh_projects:
+            subscriptable_project = gh_project.to_dict()
+            project_id = subscriptable_project["id"]
 
-            # Ensure project is unique and add its structure to unique projects
-            if project_id not in unique_projects:
+            if project_id not in projects:
                 project = Project()
-                project.load_from_json(fetched_project, repo.organization_name)
+                organization_name = repository.organization_name
+                project.load_from_json(subscriptable_project, organization_name)
+                project.update_field_options(session, repository)
 
                 # Primary project structure
-                unique_projects[project.id] = project
-            else:
-                # If the project already exists, update the `RepositoriesFromConfig` list
-                unique_projects[project.id][project.repositoriesFromConfig].append(repo.organization_name)
+                projects[project_id] = project
 
-    return unique_projects
+    return projects
 
 
-def get_issues_from_project(project_id: str, session: requests.sessions.Session) -> List[Dict[str, dict]]:
-    """
-    Fetches all issues from a given project using a GraphQL query.
-    The issues are fetched supported by pagination.
-
-    @param project_id: The project ID to fetch issues from.
-    @param session: A configured request session.
-
-    @return: The list of all issues in the project.
-    """
-    project_issues = []
-    cursor = None
-
-    while True:
-        # Add the after argument to the query if a cursor is provided
-        after_argument = f'after: "{cursor}"' if cursor else ''
-
-        # Fetch the GraphQL response with all issues attached to specific project
-        issues_from_project_query = ISSUES_FROM_PROJECT_QUERY.format(project_id=project_id, issues_per_page=ISSUE_PER_PAGE, after_argument=after_argument)
-        project_issues_response = send_graphql_query(issues_from_project_query, session)
-
-        # Return empty list, if project has no issues attached
-        if len(project_issues_response) == 0:
-            return []
-
-        general_response_structure = project_issues_response['node']['items']
-        issue_data = general_response_structure['nodes']
-        page_info = general_response_structure['pageInfo']
-
-        # Extend project issues list per every page during pagination
-        project_issues.extend(issue_data)
-        print(f"Loaded `{len(issue_data)}` issues.")
-
-        # Check for closing the pagination process
-        if not page_info['hasNextPage']:
-            break
-        cursor = page_info['endCursor']
-
-    return project_issues
-
-
-def process_projects(unique_projects: Dict[str, dict], session: requests.sessions.Session) -> Dict[str, dict]:
+def process_projects(projects: Dict[str, Project], session: requests.sessions.Session) -> Dict[str, Project]:
     """
     Processes the projects and updates their state with the fetched issues.
     The state of each project includes the issues and the attached repositories.
 
-    @param unique_projects: The unique project structures to process.
+    @param projects: The unique project structures to process.
     @param session: A configured request session.
 
     @return: The state of all projects as a `project_title: project_state` dictionary.
@@ -262,71 +68,36 @@ def process_projects(unique_projects: Dict[str, dict], session: requests.session
     project_states = {}
 
     # Update every project with adequate issue data
-    for project_id, project_state in unique_projects.items():
-        attached_repos = []
-        project_title = project_state.Title
+    for project_id, project in projects.items():
+        attached_repositories = []
 
-        print(f"Loaded project: `{project_title}`")
+        print(f"Loaded project: `{project.title}`")
         print(f"Processing issues...")
 
         # Get issues for project
-        project_issue_data = get_issues_from_project(project_id, session)
+        gh_project_issues = project.get_gh_issues(session)
 
         # Process the issue data and update project state
-        for issue in project_issue_data:
-            if 'content' in issue and issue['content'] is not None:
-                content = issue['content']
-                title = content.get('title', 'N/A')
-                number = content.get('number', 'N/A')
-                state = content.get('state', 'N/A')
-                repo_name = content['repository'].get('name', 'N/A') if 'repository' in content else 'N/A'
-                owner = content['repository']['owner'].get('login', 'N/A') if 'repository' in content else 'N/A'
-                issue_field_types = []
+        for gh_issue in gh_project_issues:
+            if 'content' in gh_issue and gh_issue['content'] is not None:
+                project_issue = ProjectIssue()
+                project_issue.load_from_json(gh_issue)
 
-                # Get the field types for the issue
-                for node in issue['fieldValues']['nodes']:
-                    if node['__typename'] == 'ProjectV2ItemFieldSingleSelectValue':
-                        issue_field_types.append(node['name'])
+                # Update project with attached repositories
+                repository_name = project_issue.repository_name
+                project.update_attached_repositories(repository_name, attached_repositories)
 
-                # Initialize a dictionary for the issue
-                project_issue = ProjectIssue(
-                    Number=number,
-                    Owner=owner,
-                    RepositoryName=repo_name,
-                    Title=title,
-                    State=state
-                )
-
-                issue_repo_name = project_issue.RepositoryName
-
-                # Updating the ProjectRepositories
-                if issue_repo_name != "N/A":
-                    if issue_repo_name not in attached_repos:
-                        project_state.ProjectRepositories.append(issue_repo_name)
-                        attached_repos.append(issue_repo_name)
-
-                # Prepare the field options structure for usage
-                field_options = unique_projects[project_id].FieldOptions
-
-                # Add the field types to the issue dictionary
-                for field_type in issue_field_types:
-                    # Look if issue field is in the field options
-                    for name, options in field_options.items():
-                        if field_type in options:
-                            setattr(project_issue, name, field_type)
-
-                project_issue = project_issue.to_dict()
-
-                # Add the issue to the project state
-                project_state.Issues.append(project_issue)
+                # Append the issue to the project
+                subscriptable_project_issue = project_issue.to_dict()
+                project.issues.append(subscriptable_project_issue)
 
             else:
-                print(f"Warning: 'content' key missing or None in issue: {issue}")
+                print(f"Warning: 'content' key missing or None in issue: {project_issue}")
 
-        print(f"Processed {len(project_state.Issues)} project issues in total.")
+        print(f"Processed {len(project.issues)} project issues in total.")
 
         # Add the project state to the dictionary
-        project_states.update({project_title: project_state})
+        project_states.update({project.title: project})
 
     return project_states
 
@@ -347,7 +118,7 @@ def main() -> None:
 
     # Parse repositories JSON string
     try:
-        repositories = json.loads(repositories)
+        repositories_json = json.loads(repositories)
     except json.JSONDecodeError as e:
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
@@ -366,16 +137,24 @@ def main() -> None:
     # Initialize the request session
     session = initialize_request_session(github_token)
 
-    # Get unique projects with primary structure
-    unique_projects = get_unique_projects(repositories, session)
+    repositories = []
+
+    # Process every repo from repos input
+    for repository_json in repositories_json:
+        repository = Repository()
+        repository.load_from_json(repository_json)
+        repositories.append(repository)
+
+    # Get dict of project objects with primary structure
+    projects = get_unique_projects(repositories, session)
 
     # Process unique projects with updating their state with attached issues' info
-    project_states = process_projects(unique_projects, session)
+    project_states = process_projects(projects, session)
 
     # Save project states to the unique JSON files
     for project_title, project_state in project_states.items():
-        project_state = project_state.to_dict()
-        output_file_name = save_issues_to_json_file(project_state, "project", OUTPUT_DIRECTORY, project_title)
+        project_state_to_save = project_state.to_dict()
+        output_file_name = save_to_json_file(project_state_to_save, "project", OUTPUT_DIRECTORY, project_title)
         print(f"Project's '{project_title}' Issue state saved into file: {output_file_name}.")
 
     print("Script for downloading project data from GitHub GraphQL ended.")

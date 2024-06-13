@@ -51,11 +51,11 @@ def ensure_folder_exists(folder_name: str, current_dir: str) -> None:
         print(f"The '{folder_path}' folder has been created.")
 
 
-def save_issues_to_json_file(issues: List[Issue], object_type: str, output_directory: str, state_name: str) -> str:
+def save_to_json_file(state_to_save: list, object_type: str, output_directory: str, state_name: str) -> str:
     """
     Saves a list state to a JSON file.
 
-    @param issues: The list of issues ot be saved.
+    @param state_to_save: The list to be saved.
     @param object_type: The object type of the state (e.g., 'feature', 'project').
     @param output_directory: The directory, where the file will be saved.
     @param state_name: The naming of the state.
@@ -68,9 +68,10 @@ def save_issues_to_json_file(issues: List[Issue], object_type: str, output_direc
     output_file_path = f"{output_directory}/{output_file_name}"
 
     # Save a file with correct output
-    with open(output_file_path, 'w', encoding='utf-8') as json_file:
+    with open(output_file_path, 'w', encoding='utf-'
+                                              '8') as json_file:
         json.dump(
-            [issue.to_dict() for issue in issues],
+            state_to_save,
             json_file,
             ensure_ascii=False,
             indent=4)
