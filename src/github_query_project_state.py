@@ -92,7 +92,7 @@ def process_projects(projects: Dict[str, Project], session: requests.sessions.Se
                 project.issues.append(subscriptable_project_issue)
 
             else:
-                print(f"Warning: 'content' key missing or None in issue: {project_issue}")
+                print(f"Warning: 'content' key missing or None in issue: {gh_issue}")
 
         print(f"Processed {len(project.issues)} project issues in total.")
 

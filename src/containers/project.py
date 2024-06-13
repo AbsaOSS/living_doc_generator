@@ -87,6 +87,16 @@ class Project(BaseContainer):
         }
 
     def load_from_json(self, gh_project, organization_name):
+        for key in ["id", "title", "number"]:
+            if key not in gh_project:
+                raise ValueError(f"Project key '{key}' is missing in the input dictionary.")
+
+        if not isinstance(gh_project["id"], str) or not isinstance(gh_project["title"], str):
+            raise ValueError("Project value of 'id' and 'title' should be of type string.")
+
+        if not isinstance(gh_project["number"], int):
+            raise ValueError("Project value of 'number' should be of type integer.")
+
         self.id = gh_project.get("id", CONSTANT)
         self.title = gh_project.get("title", CONSTANT)
         self.number = gh_project.get("number", CONSTANT)

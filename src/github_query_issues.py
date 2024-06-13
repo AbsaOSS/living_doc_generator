@@ -25,13 +25,13 @@ ISSUE_PER_PAGE = 100
 
 def filter_issues_by_numbers(issues: List[Issue], added_issue_numbers: Set[int]) -> (List[Issue], Set[int]):
     """
-    TODO - update docstring
     Saves the provided issue to a list, ensuring that no duplicates are added.
     Done by checking the issue's id in a set of added issue ids.
 
+    @param issues: The list of issues to filter.
     @param added_issue_numbers: The set of added issue ids.
 
-    @return: None TODO
+    @return: The filtered list of issues and the updated set of added issue ids.
     """
     # Save only issues with unique issue number
     filtered_issues = []

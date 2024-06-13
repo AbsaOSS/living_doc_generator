@@ -6,6 +6,7 @@ from .milestone import Milestone
 
 CONSTANT = "N/A"
 
+
 class Issue:
     def __init__(self, repository: Repository):
         self.number: int = 0
