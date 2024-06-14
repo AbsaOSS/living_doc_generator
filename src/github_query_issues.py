@@ -10,7 +10,7 @@ import requests
 import json
 import os
 
-from containers.issue import Issue
+from containers.repository_issue import RepositoryIssue
 from containers.repository import Repository
 from typing import Set, List
 
@@ -23,7 +23,7 @@ OUTPUT_DIRECTORY = "../data/fetched_data/issue_data"
 ISSUE_PER_PAGE = 100
 
 
-def filter_issues_by_numbers(issues: List[Issue], added_issue_numbers: Set[int]) -> (List[Issue], Set[int]):
+def filter_issues_by_numbers(issues: List[RepositoryIssue], added_issue_numbers: Set[int]) -> (List[RepositoryIssue], Set[int]):
     """
     Saves the provided issue to a list, ensuring that no duplicates are added.
     Done by checking the issue's id in a set of added issue ids.
@@ -63,7 +63,7 @@ def get_base_endpoint(label_name: str, repository: Repository) -> str:
     return base_endpoint
 
 
-def get_issues_from_repository(repository: Repository, github_token: str) -> List[Issue]:
+def get_issues_from_repository(repository: Repository, github_token: str) -> List[RepositoryIssue]:
     """
     Fetches all issues from a GitHub repository using the GitHub REST API.
     If query_labels are not specified, all issues are fetched.
@@ -103,13 +103,13 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
                 # Parse json issue to Issue object
                 issues_json = response.json()['items']
                 for issue_json in issues_json:
-                    issue = Issue(repository)
-                    issue.load_from_json(issue_json)
+                    repository_issue = RepositoryIssue(repository)
+                    repository_issue.load_from_json(issue_json)
 
                     if label_name is not None:
-                        issue.filter_out_labels_in_description(label_name, issues)
+                        repository_issue.filter_out_labels_in_description(label_name, issues)
                     else:
-                        issues.append(issue)
+                        issues.append(repository_issue)
 
                 if label_name is None:
                     print(f"Loaded {len(issues)} issues.")
@@ -162,6 +162,7 @@ def main() -> None:
         print(f"Downloading issues from repository `{repository.organization_name}/{repository.repository_name}`.")
 
         # Load Issues from repository (unique for each repository)
+        # TODO: Might be a method for repository class `repository.get_issues(github_token)`
         loaded_issues = get_issues_from_repository(repository, github_token)
 
         # Save issues from one repository to the unique JSON file

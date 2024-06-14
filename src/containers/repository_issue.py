@@ -5,7 +5,7 @@ from .repository import Repository
 from .milestone import Milestone
 
 
-class Issue:
+class RepositoryIssue:
     def __init__(self, repository: Repository):
         self.number: int = 0
         self.organization_name: str = repository.organization_name
@@ -64,7 +64,7 @@ class Issue:
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
         self.page_filename = self.sanitize_filename(md_filename_base)
 
-    def filter_out_labels_in_description(self, label_name: str, issues: List['Issue']):
+    def filter_out_labels_in_description(self, label_name: str, issues: List['RepositoryIssue']):
         """
         Filters out the issues with the description labels and appends them to the fetched_issues list.
 

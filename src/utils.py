@@ -8,9 +8,6 @@ These functions can be imported and used in other src as needed.
 import os
 import json
 import requests
-from typing import List, Dict
-
-from containers.issue import Issue
 
 
 def initialize_request_session(github_token: str) -> requests.sessions.Session:

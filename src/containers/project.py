@@ -69,6 +69,7 @@ class Project(BaseContainer):
         self.number: int = 0
         self.title: str = ""
         self.organization_name: str = ""
+        self.config_repositories: List[str] = []
         # TODO: I will have object Project and its repositories. Delete this field
         self.project_repositories: List[str] = []
         self.issues: List[ProjectIssue] = []
@@ -80,12 +81,13 @@ class Project(BaseContainer):
             'number': self.number,
             'title': self.title,
             'organization_name': self.organization_name,
+            'config_repositories': self.config_repositories,
             'project_repositories': self.project_repositories,
             'issues': self.issues,
             'field_options': self.field_options
         }
 
-    def load_from_json(self, gh_project, organization_name):
+    def load_from_json(self, gh_project, repository):
         for key in ["id", "title", "number"]:
             if key not in gh_project:
                 raise ValueError(f"Project key '{key}' is missing in the input dictionary.")
@@ -99,7 +101,8 @@ class Project(BaseContainer):
         self.id = gh_project["id"]
         self.title = gh_project["title"]
         self.number = gh_project["number"]
-        self.organization_name = organization_name
+        self.organization_name = repository.organization_name
+        self.config_repositories.append(repository.repository_name)
 
     def update_field_options(self, session: requests.sessions.Session, repository):
         project_field_options_query = PROJECT_FIELD_OPTIONS_QUERY.format(org_name=repository.organization_name,

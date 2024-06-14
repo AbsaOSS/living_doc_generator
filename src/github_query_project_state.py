@@ -45,12 +45,14 @@ def get_unique_projects(repositories: List[Repository], session: requests.sessio
 
             if project_id not in projects:
                 project = Project()
-                organization_name = repository.organization_name
-                project.load_from_json(subscriptable_project, organization_name)
+                project.load_from_json(subscriptable_project, repository)
                 project.update_field_options(session, repository)
 
                 # Primary project structure
                 projects[project_id] = project
+
+            else:
+                projects[project.id].config_repositories.append(repository.repository_name)
 
     return projects
 
