@@ -4,8 +4,6 @@ from typing import List, Optional
 from .repository import Repository
 from .milestone import Milestone
 
-CONSTANT = "N/A"
-
 
 class Issue:
     def __init__(self, repository: Repository):
@@ -43,28 +41,16 @@ class Issue:
         }
 
     def load_from_json(self, issue):
-        for key in ["number", "title", "state", "url", "body", "created_at", "updated_at"]:
-            if key not in issue:
-                raise ValueError(f"Issue key '{key}' is missing in the input dictionary.")
+        self.number = issue["number"]
+        self.title = issue["title"]
+        self.state = issue["state"]
+        self.url = issue["url"]
+        self.body = issue["body"]
+        self.created_at = issue["created_at"]
+        self.updated_at = issue["updated_at"]
+        self.closed_at = issue["closed_at"]
 
-        if not isinstance(issue["number"], int):
-            raise ValueError("Issue value of 'number' should be of type int.")
-
-        string_keys_to_check = ["title", "state", "url", "body", "created_at", "updated_at"]
-        for key in string_keys_to_check:
-            if not isinstance(issue[key], str):
-                raise ValueError(f"Issue value of '{key}' should be of type string.")
-
-        self.number = issue.get("number", CONSTANT)
-        self.title = issue.get("title", CONSTANT)
-        self.state = issue.get("state", CONSTANT)
-        self.url = issue.get("url", CONSTANT)
-        self.body = issue.get("body", CONSTANT)
-        self.created_at = issue.get("created_at", CONSTANT)
-        self.updated_at = issue.get("updated_at", CONSTANT)
-        self.closed_at = issue.get("closed_at", None)
-
-        milestone_json = issue.get("milestone", None)
+        milestone_json = issue['milestone']
 
         # Have to initialize milestone before loading from JSON, so it has default values
         self.milestone = Milestone()

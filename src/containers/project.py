@@ -4,7 +4,6 @@ import requests
 from .project_issue import ProjectIssue
 from .base_container import BaseContainer
 
-CONSTANT = "N/A"
 ISSUE_PER_PAGE = 100
 ISSUES_FROM_PROJECT_QUERY = """
     query {{
@@ -97,9 +96,9 @@ class Project(BaseContainer):
         if not isinstance(gh_project["number"], int):
             raise ValueError("Project value of 'number' should be of type integer.")
 
-        self.id = gh_project.get("id", CONSTANT)
-        self.title = gh_project.get("title", CONSTANT)
-        self.number = gh_project.get("number", CONSTANT)
+        self.id = gh_project["id"]
+        self.title = gh_project["title"]
+        self.number = gh_project["number"]
         self.organization_name = organization_name
 
     def update_field_options(self, session: requests.sessions.Session, repository):
@@ -163,7 +162,7 @@ class Project(BaseContainer):
         return gh_project_issues
 
     def update_attached_repositories(self, repository_name, attached_repositories):
-        if repository_name != "N/A":
+        if repository_name:
             if repository_name not in attached_repositories:
                 self.project_repositories.append(repository_name)
                 attached_repositories.append(repository_name)

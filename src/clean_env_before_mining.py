@@ -33,7 +33,7 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
         shutil.rmtree(directory_path)
 
 
-def clean_environment() -> None:
+def main() -> None:
     print("Cleaning environment for the Living Doc Generator")
 
     # Get the directory of the current script
@@ -50,4 +50,4 @@ def clean_environment() -> None:
 
 
 if __name__ == "__main__":
-    clean_environment()
+    main()

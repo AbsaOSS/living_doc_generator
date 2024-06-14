@@ -79,7 +79,8 @@ def process_projects(projects: Dict[str, Project], session: requests.sessions.Se
 
         # Process the issue data and update project state
         for gh_issue in gh_project_issues:
-            if 'content' in gh_issue and gh_issue['content'] is not None:
+            if ('content' in gh_issue and gh_issue['content'] is not None
+                    and gh_issue['content'] != {}):
                 project_issue = ProjectIssue()
                 project_issue.load_from_json(gh_issue)
 
@@ -95,7 +96,6 @@ def process_projects(projects: Dict[str, Project], session: requests.sessions.Se
                 print(f"Warning: 'content' key missing or None in issue: {gh_issue}")
 
         print(f"Processed {len(project.issues)} project issues in total.")
-
         # Add the project state to the dictionary
         project_states.update({project.title: project})
 
@@ -107,7 +107,7 @@ def main() -> None:
 
     # Get environment variables from the controller script
     github_token = os.getenv('GITHUB_TOKEN')
-    repositories = os.getenv('REPOSITORIES')
+    repositories_env = os.getenv('REPOSITORIES')
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
     # TODO: Implement this mentioned feature, that filter just some projects
     # projects_title_filter = os.getenv('PROJECTS_TITLE_FILTER')
@@ -118,7 +118,7 @@ def main() -> None:
 
     # Parse repositories JSON string
     try:
-        repositories_json = json.loads(repositories)
+        repositories_json = json.loads(repositories_env)
     except json.JSONDecodeError as e:
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
@@ -137,16 +137,16 @@ def main() -> None:
     # Initialize the request session
     session = initialize_request_session(github_token)
 
-    repositories = []
+    repositories_env = []
 
     # Process every repo from repos input
     for repository_json in repositories_json:
         repository = Repository()
         repository.load_from_json(repository_json)
-        repositories.append(repository)
+        repositories_env.append(repository)
 
     # Get dict of project objects with primary structure
-    projects = get_unique_projects(repositories, session)
+    projects = get_unique_projects(repositories_env, session)
 
     # Process unique projects with updating their state with attached issues' info
     project_states = process_projects(projects, session)

@@ -1,7 +1,5 @@
 from typing import List
 
-CONSTANT = "N/A"
-
 
 class ProjectIssue:
     def __init__(self):
@@ -22,31 +20,18 @@ class ProjectIssue:
             "field_types": [str(field_type) for field_type in self.field_types]
         }
 
-    def load_from_json(self, issue):
-        issue_content = issue['content']
+    def load_from_json(self, issue_json):
+        issue_content = issue_json['content']
 
-        for key in ["title", "number", "state", "repository", "fieldValues"]:
-            if key not in issue['content']:
-                raise ValueError(f"ProjectIssue key '{key}' is missing in the input dictionary.")
+        self.title = issue_content['title']
+        self.number = issue_content['number']
+        self.state = issue_content['state']
 
-        if (not isinstance(issue_content["title"], str) or not isinstance(issue_content["number"], int)
-                or not isinstance(issue_content["state"], str)):
-            raise ValueError("ProjectIssue value of 'title', 'number' and 'state' should be of correct type.")
+        repository_info = issue_content.get('repository', {})
+        self.repository_name = repository_info['name']
+        self.owner = repository_info['owner']['login']
 
-        if 'repository' in issue and (not isinstance(issue_content['repository']['name'], str)
-                                      or not isinstance(issue_content['repository']['owner']['login'], str)):
-            raise ValueError("ProjectIssue value of 'repository_name' and 'owner' should be of type string.")
-
-        if 'fieldValues' in issue and not isinstance(issue['fieldValues']['nodes'], list):
-            raise ValueError("ProjectIssue value of 'fieldValues' should be a list.")
-
-        self.title = issue_content.get('title', CONSTANT)
-        self.number = issue_content.get('number', CONSTANT)
-        self.state = issue_content.get('state', CONSTANT)
-        self.repository_name = issue_content['repository']['name'] if 'repository' in issue else CONSTANT
-        self.owner = issue_content['repository']['owner']['login'] if 'repository' in issue else CONSTANT
-
-        if 'fieldValues' in issue:
-            for node in issue['fieldValues']['nodes']:
+        if 'fieldValues' in issue_json:
+            for node in issue_json['fieldValues']['nodes']:
                 if node['__typename'] == 'ProjectV2ItemFieldSingleSelectValue':
                     self.field_types.append(node['name'])

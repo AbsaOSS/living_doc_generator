@@ -13,7 +13,7 @@ import os
 import json
 from copy import deepcopy
 from typing import List, Dict, Set, Tuple
-from utils import ensure_folder_exists, save_issues_to_json_file
+from utils import ensure_folder_exists, save_to_json_file
 from containers import Repository
 
 OUTPUT_DIRECTORY = "../data/feature_consolidation"
@@ -198,27 +198,27 @@ def consolidate_features_without_project(repositories: List[Repository],
     return consolidated_features_without_project
 
 
-if __name__ == '__main__':
-    # Get environment variables set by the controller script
-    user_token = os.getenv('GITHUB_TOKEN')
+def main() -> None:
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
-    repositories = os.getenv('REPOSITORIES')
-
-    # Parse the boolean values
     project_state_mining = project_state_mining.lower() == 'true'
 
     # Parse repositories JSON string
+    repositories_env = os.getenv('REPOSITORIES')
     try:
-        repositories = json.loads(repositories)
+        repositories_json = json.loads(repositories_env)
     except json.JSONDecodeError as e:
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
 
-    print("Environment variables:")
-    print(f"PROJECT_STATE_MINING: {project_state_mining}")
-    print(f"REPOSITORIES: {repositories}")
-
     print("Starting the consolidation process.")
+
+    repositories = []
+
+    # Process every repo from repos input
+    for repository_json in repositories_json:
+        repository = Repository()
+        repository.load_from_json(repository_json)
+        repositories.append(repository)
 
     # Consolidate features that have project attached
     consolidated_features_with_project, set_of_used_repos = consolidate_features_with_project()
@@ -238,5 +238,9 @@ if __name__ == '__main__':
     ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
 
     # Save consolidated features into JSON file
-    output_file_name = save_issues_to_json_file(consolidated_features, "consolidation", OUTPUT_DIRECTORY, "feature")
+    output_file_name = save_to_json_file(consolidated_features, "consolidation", OUTPUT_DIRECTORY, "feature")
     print(f"Consolidated {len(consolidated_features)} features in total in {output_file_name}.")
+
+
+if __name__ == '__main__':
+    main()
