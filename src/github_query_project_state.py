@@ -84,13 +84,14 @@ def process_projects(projects: Dict[str, Project], session: requests.sessions.Se
             if ('content' in gh_issue and gh_issue['content'] is not None
                     and gh_issue['content'] != {}):
                 project_issue = ProjectIssue()
-                project_issue.load_from_json(gh_issue)
+                project_issue.load_from_json(gh_issue, project.field_options)
 
                 # Update project with attached repositories
                 repository_name = project_issue.repository_name
                 project.update_attached_repositories(repository_name, attached_repositories)
 
                 # Append the issue to the project
+                # TODO: Check if this is the right way to append the issue to the project, to_dict and back to json
                 subscriptable_project_issue = project_issue.to_dict()
                 project.issues.append(subscriptable_project_issue)
 
@@ -109,7 +110,6 @@ def main() -> None:
 
     # Get environment variables from the controller script
     github_token = os.getenv('GITHUB_TOKEN')
-    repositories_env = os.getenv('REPOSITORIES')
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
     # TODO: Implement this mentioned feature, that filter just some projects
     # projects_title_filter = os.getenv('PROJECTS_TITLE_FILTER')
@@ -119,6 +119,8 @@ def main() -> None:
     # projects_title_filter = projects_title_filter.lower() == 'true'
 
     # Parse repositories JSON string
+    repositories_env = os.getenv('REPOSITORIES')
+
     try:
         repositories_json = json.loads(repositories_env)
     except json.JSONDecodeError as e:

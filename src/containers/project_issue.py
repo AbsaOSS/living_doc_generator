@@ -1,14 +1,18 @@
-from typing import List
+from typing import Optional
 
 
 class ProjectIssue:
     def __init__(self):
-        self.title: str = ""
         self.number: int = 0
-        self.state: str = ""
+        self.organization_name: str = ""
         self.repository_name: str = ""
-        self.owner: str = ""
-        self.field_types: List[str] = []
+        # TODO: title and state can be deleted, because they are already mined in repository Issue
+        self.title: str = ""
+        self.state: str = ""
+        self.status: Optional[str] = None
+        self.priority: Optional[str] = None
+        self.size: Optional[str] = None
+        self.moscow: Optional[str] = None
 
     def to_dict(self):
         return {
@@ -16,11 +20,14 @@ class ProjectIssue:
             "number": self.number,
             "state": self.state,
             "repository_name": self.repository_name,
-            "owner": self.owner,
-            "field_types": [str(field_type) for field_type in self.field_types]
+            "organization_name": self.organization_name,
+            "status": self.status,
+            "priority": self.priority,
+            "size": self.size,
+            "moscow": self.moscow
         }
 
-    def load_from_json(self, issue_json):
+    def load_from_json(self, issue_json, field_options):
         issue_content = issue_json['content']
 
         self.title = issue_content['title']
@@ -29,9 +36,49 @@ class ProjectIssue:
 
         repository_info = issue_content.get('repository', {})
         self.repository_name = repository_info['name']
-        self.owner = repository_info['owner']['login']
+        self.organization_name = repository_info['owner']['login']
 
+        field_types = []
         if 'fieldValues' in issue_json:
             for node in issue_json['fieldValues']['nodes']:
                 if node['__typename'] == 'ProjectV2ItemFieldSingleSelectValue':
-                    self.field_types.append(node['name'])
+                    field_types.append(node['name'])
+
+        for field_type in field_types:
+            if field_type in field_options['Status']:
+                self.status = field_type
+            elif field_type in field_options['Priority']:
+                self.priority = field_type
+            elif field_type in field_options['Size']:
+                self.size = field_type
+            elif field_type in field_options['MoSCoW']:
+                self.moscow = field_type
+
+    def items(self):
+        return vars(self).items()
+
+    # TODO: wrong naming
+    def load_from_output(self, issue_output):
+        self.title = issue_output['title']
+        self.number = issue_output['number']
+        self.state = issue_output['state']
+        self.repository_name = issue_output['repository_name']
+        self.organization_name = issue_output['organization_name']
+        self.status = issue_output['status']
+        self.priority = issue_output['priority']
+        self.size = issue_output['size']
+
+    # TODO: Candidate for issue parent class
+    def make_string_key(self) -> str:
+        """
+           Creates a unique 3way string key for identifying every unique feature.
+
+           @return: The unique string key for the feature.
+        """
+        organization_name = self.organization_name
+        repository_name = self.repository_name
+        number = self.number
+
+        string_key = f"{organization_name}/{repository_name}/{number}"
+
+        return string_key
