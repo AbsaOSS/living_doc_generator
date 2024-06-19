@@ -6,10 +6,9 @@ from .milestone import Milestone
 
 
 class RepositoryIssue:
-    def __init__(self, repository: Repository):
+    def __init__(self):
         self.number: int = 0
-        self.organization_name: str = repository.organization_name
-        self.repository_name: str = repository.repository_name
+        self.repository: Repository = Repository()
         self.title: str = ""
         self.state: str = ""
         self.url: str = ""
@@ -24,8 +23,8 @@ class RepositoryIssue:
     def to_dict(self):
         return {
             "number": self.number,
-            "organization_name": self.organization_name,
-            "repository_name": self.repository_name,
+            "organization_name": self.repository.organization_name,
+            "repository_name": self.repository.repository_name,
             "title": self.title,
             "state": self.state,
             "url": self.url,
@@ -40,25 +39,25 @@ class RepositoryIssue:
             "page_filename": self.page_filename
         }
 
-    def load_from_json(self, issue):
-        self.number = issue["number"]
-        self.title = issue["title"]
-        self.state = issue["state"]
-        self.url = issue["url"]
-        self.body = issue["body"]
-        self.created_at = issue["created_at"]
-        self.updated_at = issue["updated_at"]
-        self.closed_at = issue["closed_at"]
-
-        milestone_json = issue['milestone']
+    def load_from_json(self, issue_json, repository):
+        self.number = issue_json["number"]
+        self.repository = repository
+        self.title = issue_json["title"]
+        self.state = issue_json["state"]
+        self.url = issue_json["html_url"]
+        self.body = issue_json["body"]
+        self.created_at = issue_json["created_at"]
+        self.updated_at = issue_json["updated_at"]
+        self.closed_at = issue_json["closed_at"]
 
         # Have to initialize milestone before loading from JSON, so it has default values
+        milestone_json = issue_json['milestone']
         self.milestone = Milestone()
 
         if milestone_json is not None:
             self.milestone.load_from_json(milestone_json)
 
-        labels = issue.get('labels', [])
+        labels = issue_json.get('labels', [])
         self.labels = [label['name'] for label in labels]
 
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
@@ -74,6 +73,44 @@ class RepositoryIssue:
         for label in self.labels:
             if label == label_name:
                 issues.append(self)
+
+    def load_from_output(self, issue_output):
+        self.number = issue_output["number"]
+        self.title = issue_output["title"]
+        self.state = issue_output["state"]
+        self.url = issue_output["url"]
+        self.body = issue_output["body"]
+        self.created_at = issue_output["created_at"]
+        self.updated_at = issue_output["updated_at"]
+        self.closed_at = issue_output["closed_at"]
+
+        self.repository = Repository()
+        self.repository.organization_name = issue_output["organization_name"]
+        self.repository.repository_name = issue_output["repository_name"]
+
+        if "milestone" in issue_output:
+            self.milestone = Milestone()
+            self.milestone.number = issue_output["milestone_number"]
+            self.milestone.title = issue_output["milestone_title"]
+            self.milestone.html_url = issue_output["milestone_html_url"]
+
+        self.labels = issue_output["labels"]
+        self.page_filename = issue_output["page_filename"]
+
+    # TODO: Candidate for issue parent class
+    def make_string_key(self) -> str:
+        """
+           Creates a unique 3way string key for identifying every unique feature.
+
+           @return: The unique string key for the feature.
+        """
+        organization_name = self.repository.organization_name
+        repository_name = self.repository.repository_name
+        number = self.number
+
+        string_key = f"{organization_name}/{repository_name}/{number}"
+
+        return string_key
 
     @staticmethod
     def sanitize_filename(filename: str) -> str:

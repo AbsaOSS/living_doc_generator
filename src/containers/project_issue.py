@@ -6,9 +6,9 @@ class ProjectIssue:
         self.number: int = 0
         self.organization_name: str = ""
         self.repository_name: str = ""
-        # TODO: title and state can be deleted, because they are already mined in repository Issue
-        self.title: str = ""
-        self.state: str = ""
+        # TODO: title and state can be deleted, since they are already mined in repository Issue
+        # self.title: str = ""
+        # self.state: str = ""
         self.status: Optional[str] = None
         self.priority: Optional[str] = None
         self.size: Optional[str] = None
@@ -16,11 +16,11 @@ class ProjectIssue:
 
     def to_dict(self):
         return {
-            "title": self.title,
             "number": self.number,
-            "state": self.state,
-            "repository_name": self.repository_name,
             "organization_name": self.organization_name,
+            "repository_name": self.repository_name,
+            # "title": self.title,
+            # "state": self.state,
             "status": self.status,
             "priority": self.priority,
             "size": self.size,
@@ -30,9 +30,9 @@ class ProjectIssue:
     def load_from_json(self, issue_json, field_options):
         issue_content = issue_json['content']
 
-        self.title = issue_content['title']
+        # self.title = issue_content['title']
         self.number = issue_content['number']
-        self.state = issue_content['state']
+        # self.state = issue_content['state']
 
         repository_info = issue_content.get('repository', {})
         self.repository_name = repository_info['name']
@@ -45,25 +45,22 @@ class ProjectIssue:
                     field_types.append(node['name'])
 
         for field_type in field_types:
-            if field_type in field_options['Status']:
+            if field_type in field_options.get('Status', []):
                 self.status = field_type
-            elif field_type in field_options['Priority']:
+            elif field_type in field_options.get('Priority', []):
                 self.priority = field_type
-            elif field_type in field_options['Size']:
+            elif field_type in field_options.get('Size', []):
                 self.size = field_type
-            elif field_type in field_options['MoSCoW']:
+            elif field_type in field_options.get('MoSCoW', []):
                 self.moscow = field_type
-
-    def items(self):
-        return vars(self).items()
 
     # TODO: wrong naming
     def load_from_output(self, issue_output):
-        self.title = issue_output['title']
+        # self.title = issue_output['title']
         self.number = issue_output['number']
-        self.state = issue_output['state']
-        self.repository_name = issue_output['repository_name']
+        # self.state = issue_output['state']
         self.organization_name = issue_output['organization_name']
+        self.repository_name = issue_output['repository_name']
         self.status = issue_output['status']
         self.priority = issue_output['priority']
         self.size = issue_output['size']

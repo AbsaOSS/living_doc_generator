@@ -96,9 +96,9 @@ def process_projects(projects: Dict[str, Project], session: requests.sessions.Se
                 project.issues.append(subscriptable_project_issue)
 
             else:
-                print(f"Warning: 'content' key missing or None in issue: {gh_issue}")
+                print(f"Warning: 'content' key missing or None in {project.title}'s issue: {gh_issue}")
 
-        print(f"Processed {len(project.issues)} project issues in total.")
+        print(f"Processed {len(project.issues)} project issues in total for `{project.title}`.")
         # Add the project state to the dictionary
         project_states.update({project.title: project})
 

@@ -103,8 +103,8 @@ def get_issues_from_repository(repository: Repository, github_token: str) -> Lis
                 # Parse json issue to Issue object
                 issues_json = response.json()['items']
                 for issue_json in issues_json:
-                    repository_issue = RepositoryIssue(repository)
-                    repository_issue.load_from_json(issue_json)
+                    repository_issue = RepositoryIssue()
+                    repository_issue.load_from_json(issue_json, repository)
 
                     if label_name is not None:
                         repository_issue.filter_out_labels_in_description(label_name, issues)
@@ -141,9 +141,10 @@ def main() -> None:
 
     # Get environment variables from the controller script
     github_token = os.getenv('GITHUB_TOKEN')
-    repositories_env = os.getenv('REPOSITORIES')
 
     # Parse repositories JSON string
+    repositories_env = os.getenv('REPOSITORIES')
+
     try:
         repositories_json = json.loads(repositories_env)
     except json.JSONDecodeError as e:
@@ -166,6 +167,7 @@ def main() -> None:
         loaded_issues = get_issues_from_repository(repository, github_token)
 
         # Save issues from one repository to the unique JSON file
+        # TODO: Check if this is the right way to append the issue to the project, to_dict and back to json
         issues_to_save = [issue.to_dict() for issue in loaded_issues]
 
         output_file_name = save_to_json_file(issues_to_save, "feature", OUTPUT_DIRECTORY, repository.repository_name)
