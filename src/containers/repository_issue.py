@@ -1,14 +1,14 @@
 import re
 from typing import List, Optional
 
-from .repository import Repository
 from .milestone import Milestone
 
 
 class RepositoryIssue:
     def __init__(self):
         self.number: int = 0
-        self.repository: Repository = Repository()
+        self.organization_name: str = ""
+        self.repository_name: str = ""
         self.title: str = ""
         self.state: str = ""
         self.url: str = ""
@@ -20,28 +20,11 @@ class RepositoryIssue:
         self.labels: List[str] = []
         self.page_filename: str = ""
 
-    def to_dict(self):
-        return {
-            "number": self.number,
-            "organization_name": self.repository.organization_name,
-            "repository_name": self.repository.repository_name,
-            "title": self.title,
-            "state": self.state,
-            "url": self.url,
-            "body": self.body,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-            "closed_at": self.closed_at,
-            "milestone_number": self.milestone.number,
-            "milestone_title": self.milestone.title,
-            "milestone_html_url": self.milestone.html_url,
-            "labels": [str(label) for label in self.labels],
-            "page_filename": self.page_filename
-        }
-
     def load_from_json(self, issue_json, repository):
+        # TODO: is possible to remove load and save from and to json, so it is json native
         self.number = issue_json["number"]
-        self.repository = repository
+        self.organization_name = repository.organization_name
+        self.repository_name = repository.repository_name
         self.title = issue_json["title"]
         self.state = issue_json["state"]
         self.url = issue_json["html_url"]
@@ -63,16 +46,36 @@ class RepositoryIssue:
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
         self.page_filename = self.sanitize_filename(md_filename_base)
 
-    def filter_out_labels_in_description(self, label_name: str, issues: List['RepositoryIssue']):
+    def to_dict(self):
+        return {
+            "number": self.number,
+            "organization_name": self.organization_name,
+            "repository_name": self.repository_name,
+            "title": self.title,
+            "state": self.state,
+            "url": self.url,
+            "body": self.body,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "closed_at": self.closed_at,
+            "milestone_number": self.milestone.number,
+            "milestone_title": self.milestone.title,
+            "milestone_html_url": self.milestone.html_url,
+            "labels": [str(label) for label in self.labels],
+            "page_filename": self.page_filename
+        }
+
+    def filter_out_labels_in_description(self, label_name: str, repository_issues: List['RepositoryIssue']):
         """
-        Filters out the issues with the description labels and appends them to the fetched_issues list.
+        Filter out the RepositoryIssues which have label_name only in issue description and append
+        them into issues
 
         @param label_name: The name of the label.
-        @param issues: The list of fetched issues.
+        @param repository_issues: The list of fetched issues.
         """
         for label in self.labels:
             if label == label_name:
-                issues.append(self)
+                repository_issues.append(self)
 
     def load_from_output(self, issue_output):
         self.number = issue_output["number"]
@@ -83,10 +86,8 @@ class RepositoryIssue:
         self.created_at = issue_output["created_at"]
         self.updated_at = issue_output["updated_at"]
         self.closed_at = issue_output["closed_at"]
-
-        self.repository = Repository()
-        self.repository.organization_name = issue_output["organization_name"]
-        self.repository.repository_name = issue_output["repository_name"]
+        self.organization_name = issue_output["organization_name"]
+        self.repository_name = issue_output["repository_name"]
 
         if "milestone" in issue_output:
             self.milestone = Milestone()
@@ -104,11 +105,8 @@ class RepositoryIssue:
 
            @return: The unique string key for the feature.
         """
-        organization_name = self.repository.organization_name
-        repository_name = self.repository.repository_name
-        number = self.number
 
-        string_key = f"{organization_name}/{repository_name}/{number}"
+        string_key = f"{self.organization_name}/{self.repository_name}/{self.number}"
 
         return string_key
 
