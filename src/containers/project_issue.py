@@ -1,5 +1,7 @@
 from typing import Optional
 
+NO_VALUE_SELECTED = "N/A"
+
 
 class ProjectIssue:
     def __init__(self):
@@ -9,10 +11,10 @@ class ProjectIssue:
         # TODO: title and state can be deleted, since they are already mined in repository Issue
         # self.title: str = ""
         # self.state: str = ""
-        self.status: Optional[str] = None
-        self.priority: Optional[str] = None
-        self.size: Optional[str] = None
-        self.moscow: Optional[str] = None
+        self.status: Optional[str] = NO_VALUE_SELECTED
+        self.priority: Optional[str] = NO_VALUE_SELECTED
+        self.size: Optional[str] = NO_VALUE_SELECTED
+        self.moscow: Optional[str] = NO_VALUE_SELECTED
 
     def to_dict(self):
         return {
@@ -55,15 +57,14 @@ class ProjectIssue:
                 self.moscow = field_type
 
     # TODO: wrong naming
-    def load_from_output(self, issue_output):
-        # self.title = issue_output['title']
-        self.number = issue_output['number']
-        # self.state = issue_output['state']
-        self.organization_name = issue_output['organization_name']
-        self.repository_name = issue_output['repository_name']
-        self.status = issue_output['status']
-        self.priority = issue_output['priority']
-        self.size = issue_output['size']
+    def load_from_data(self, issue_from_data):
+        self.number = issue_from_data['number']
+        self.organization_name = issue_from_data['organization_name']
+        self.repository_name = issue_from_data['repository_name']
+        self.status = issue_from_data['status']
+        self.priority = issue_from_data['priority']
+        self.size = issue_from_data['size']
+        self.moscow = issue_from_data['moscow']
 
     # TODO: Candidate for issue parent class
     def make_string_key(self) -> str:

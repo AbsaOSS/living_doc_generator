@@ -9,7 +9,7 @@ for each unique repository.
 import json
 import os
 
-from containers.repository_factory import RepositoryFactory
+from containers.repository import Repository
 
 from utils import (ensure_folder_exists,
                    initialize_request_session,
@@ -41,11 +41,11 @@ def main() -> None:
     # Initialize the request session
     session = initialize_request_session(github_token)
 
-    # Load json repositories and convert them into objects
-    repositories = RepositoryFactory.load_repositories_from_json(repositories_json)
-
     # Mine issues from every input Repository
-    for repository in repositories:
+    for repository_json in repositories_json:
+        repository = Repository()
+        repository.load_from_json(repository_json)
+
         print(f"Downloading issues from repository `{repository.organization_name}/{repository.repository_name}`.")
 
         # Load issues from one repository (unique for each repository)

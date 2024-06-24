@@ -18,31 +18,13 @@ from containers.repository import Repository
 from containers.repository_issue import RepositoryIssue
 from containers.project_issue import ProjectIssue
 from containers.consolidated_issue import ConsolidatedIssue
+from utils import load_repository_issue_from_data
 
 REPOSITORY_ISSUE_DIRECTORY = "../data/fetched_data/issue_data"
 PROJECT_ISSUE_DIRECTORY = "../data/fetched_data/project_data"
 CONSOLIDATED_ISSUE_DIRECTORY = "../data/issue_consolidation"
 
 
-def load_repository_issue_from_data(directory: str, repository_name: str) -> List[dict]:
-    """
-        Loads feature data from a JSON file located in a specified directory.
-
-        @param directory: The directory where the JSON file to be loaded is located.
-        @param repository_name: The name of the repository for which the feature data is being loaded.
-
-        @return: The feature data as a list of dictionaries.
-    """
-    # Load feature data
-    # TODO: Make a context attribute for feature, so the method is more generic
-    issue_filename = f"{repository_name}.feature.json"
-    issue_filename_path = os.path.join(directory, issue_filename).replace("-", "_").lower()
-    issue_json_from_data = json.load(open(issue_filename_path))
-
-    return issue_json_from_data
-
-
-# TODO: probably wrong typehint for repository_issues
 def consolidate_project_issues(repository_issues: List[RepositoryIssue],
                                project_issues: Dict[str, ProjectIssue],
                                project_title: str) -> List[ConsolidatedIssue]:
@@ -71,7 +53,8 @@ def consolidate_project_issues(repository_issues: List[RepositoryIssue],
             project_issue = project_issues[repository_issue_key]
             consolidate_issue.update_with_project_data(project_issue, project_title)
         else:
-            consolidate_issue.error = "Not found in project, but expected."
+            # TODO: Solve this for now, have to find a way to solve archived project issues.
+            consolidate_issue.error = "Not found in project, but expected. This issue is probably archived project issue."
 
         consolidated_issues_per_repository.append(consolidate_issue)
 
@@ -102,7 +85,7 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
             project_issues = {}
             for project_json_issue in project_json_from_data["issues"]:
                 project_issue = ProjectIssue()
-                project_issue.load_from_output(project_json_issue)
+                project_issue.load_from_data(project_json_issue)
 
                 string_key = project_issue.make_string_key()
                 project_issues[string_key] = project_issue
@@ -112,11 +95,11 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
 
                 repository_issues = []
 
-                repository_issues_output = load_repository_issue_from_data(REPOSITORY_ISSUE_DIRECTORY, repository_name)
+                repository_issues_from_data = load_repository_issue_from_data(REPOSITORY_ISSUE_DIRECTORY, repository_name)
 
-                for repository_issue_output in repository_issues_output:
+                for repository_issue_data in repository_issues_from_data:
                     repository_issue = RepositoryIssue()
-                    repository_issue.load_from_data(repository_issue_output)
+                    repository_issue.load_from_data(repository_issue_data)
                     repository_issues.append(repository_issue)
 
                 # Merge feature with additional project data
@@ -130,45 +113,11 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
     return consolidated_project_issues, used_repositories
 
 
-def consolidate_issues_without_project(repositories: List[Repository],
-                                       set_of_used_repos: Set[str],
-                                       project_state_mining_switch: bool) -> List[ConsolidatedIssue]:
-    """
-        Consolidates features that do not have a project attached.
-        Updating feature structure with info of not having project attached.
-
-        @param repositories: The list of repositories to fetch features from.
-        @param set_of_used_repos: The set of repository names that have been already used and are attached to a project.
-        @param project_state_mining_switch: The switch to enable or disable project state mining.
-
-        @return: A list of consolidated features without a project.
-    """
-    # List to store the issues data without project
-    consolidated_issues_without_project = []
-
-    for repository in repositories:
-        if repository.repository_name not in set_of_used_repos:
-            print(f"Processing repository without project: {repository.repository_name}...")
-            repository_issues_from_data = load_repository_issue_from_data(REPOSITORY_ISSUE_DIRECTORY, repository.repository_name)
-
-            # Add additional info also to features without project
-            for repository_issue_from_data in repository_issues_from_data:
-                repository_issue = RepositoryIssue()
-                repository_issue.load_from_data(repository_issue_from_data)
-
-                consolidate_issue = ConsolidatedIssue(repository_issue)
-
-                if not project_state_mining_switch:
-                    consolidate_issue.no_project_mining()
-
-                consolidated_issues_without_project.append(consolidate_issue)
-
-    return consolidated_issues_without_project
-
-
 def main() -> None:
     # TODO: There are issues, that should be connected to the project, but are archived. We don't know how to solve this
     # TODO: issue since, we cant get the issue archived information. Find a way, how to solve this.
+
+    # Get environment variables from the controller script
     project_state_mining = os.getenv('PROJECT_STATE_MINING')
     project_state_mining = project_state_mining.lower() == 'true'
 
@@ -183,35 +132,31 @@ def main() -> None:
         print(f"Error parsing REPOSITORIES: {e}")
         exit(1)
 
-    # Get the current directory and check that output dir exists
+    # Check if the output directory exists and create it if not
     current_dir = os.path.dirname(os.path.abspath(__file__))
     ensure_folder_exists(CONSOLIDATED_ISSUE_DIRECTORY, current_dir)
 
     print("Starting the consolidation process.")
 
-    repositories = []
+    # Consolidate repository issues with extra project data
+    # Consolidate issues that are supposed to have extra project data
+    consolidated_issues, used_repositories = consolidate_issues_with_project()
 
-    # Process every repo from repos input
-    # TODO: through the scripts I have to create a repository objects three times. I should refactor it.
+    # Consolidate issues that are not supposed to have extra project data
     for repository_json in repositories_json:
         repository = Repository()
-        repository.load_from_api_json(repository_json)
-        repositories.append(repository)
+        repository.load_from_json(repository_json)
 
-    # Consolidate issues that have project attached
-    consolidated_issues_with_project, used_repositories = consolidate_issues_with_project()
+        # TODO: renaming consolidated_issues_without_project
+        consolidated_issues_without_project = repository.consolidate_issues_without_project(used_repositories, project_state_mining)
 
-    # Consolidate issues without a project
-    consolidated_issues_without_project = consolidate_issues_without_project(repositories,
-                                                                             used_repositories,
-                                                                             project_state_mining)
+        # Combine all consolidated issues
+        consolidated_issues += consolidated_issues_without_project
 
-    # Combine all consolidated issues
-    consolidated_issues = consolidated_issues_with_project + consolidated_issues_without_project
-
+    # Convert consolidated issues into dictionaries because they cannot be serialized to JSON directly
     issues_to_save = [issue.to_dict() for issue in consolidated_issues]
 
-    # Save consolidated issues into JSON file
+    # Save consolidated issues into one JSON file
     output_file_name = save_to_json_file(issues_to_save, "consolidation", CONSOLIDATED_ISSUE_DIRECTORY, "issue")
     print(f"Consolidated {len(consolidated_issues)} issues in total in {output_file_name}.")
 

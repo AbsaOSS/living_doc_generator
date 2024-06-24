@@ -1,12 +1,16 @@
-from typing import List, Optional
+from typing import List, Set, Optional
 import requests
+import json
+import os
 
 from .gh_project import GHProject
 from .base_container import BaseContainer
 from .repository_issue import RepositoryIssue
 from .project import Project
+from .consolidated_issue import ConsolidatedIssue
 
 ISSUE_PER_PAGE = 100
+REPOSITORY_ISSUE_DIRECTORY = "../data/fetched_data/issue_data"
 PROJECTS_FROM_REPO_QUERY = """
         query {{
           repository(owner: "{org_name}", name: "{repo_name}") {{
@@ -28,7 +32,7 @@ class Repository(BaseContainer):
         self.repository_name: str = ""
         self.query_labels: List[Optional[str]] = [None]
 
-    def load_from_api_json(self, repository):
+    def load_from_json(self, repository):
         for key in ["orgName", "repoName", "queryLabels"]:
             if key not in repository:
                 raise ValueError(f"Repository key '{key}' is missing in the input dictionary.")
@@ -188,3 +192,54 @@ class Repository(BaseContainer):
 
                 else:
                     projects[project_id].config_repositories.append(self.repository_name)
+
+    def consolidate_issues_without_project(self, set_of_used_repos: Set[str],
+                                           project_state_mining_switch: bool) -> List[ConsolidatedIssue]:
+        """
+            Consolidates features that do not have a project attached.
+            Updating feature structure with info of not having project attached.
+
+            @param set_of_used_repos: The set of repository names that have been already used and are attached to a project.
+            @param project_state_mining_switch: The switch to enable or disable project state mining.
+
+            @return: A list of consolidated features without a project.
+        """
+        # List to store the issues data without project
+        consolidated_issues_without_project = []
+
+        if self.repository_name not in set_of_used_repos:
+            print(f"Processing repository without project: {self.repository_name}...")
+            repository_issues_from_data = load_repository_issue_from_data(REPOSITORY_ISSUE_DIRECTORY, self.repository_name)
+
+            # Add additional info also to features without project
+            for repository_issue_from_data in repository_issues_from_data:
+                repository_issue = RepositoryIssue()
+                repository_issue.load_from_data(repository_issue_from_data)
+
+                consolidate_issue = ConsolidatedIssue(repository_issue)
+
+                if not project_state_mining_switch:
+                    consolidate_issue.no_project_mining()
+
+                consolidated_issues_without_project.append(consolidate_issue)
+
+        return consolidated_issues_without_project
+
+
+# TODO: wrong import, should be in utils. ImportError: attempted relative import beyond top-level package
+def load_repository_issue_from_data(directory: str, repository_name: str) -> List[dict]:
+    """
+        Loads feature data from a JSON file located in a specified directory.
+
+        @param directory: The directory where the JSON file to be loaded is located.
+        @param repository_name: The name of the repository for which the feature data is being loaded.
+
+        @return: The feature data as a list of dictionaries.
+    """
+    # Load feature data
+    # TODO: Make a context attribute for feature, so the method is more generic
+    issue_filename = f"{repository_name}.feature.json"
+    issue_filename_path = os.path.join(directory, issue_filename).replace("-", "_").lower()
+    issue_json_from_data = json.load(open(issue_filename_path))
+
+    return issue_json_from_data
