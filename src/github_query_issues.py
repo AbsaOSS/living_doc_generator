@@ -41,7 +41,6 @@ def main() -> None:
     # Initialize the request session
     session = initialize_request_session(github_token)
 
-    # TODO: Design pattern for factory
     # Load json repositories and convert them into objects
     repositories = RepositoryFactory.load_repositories_from_json(repositories_json)
 

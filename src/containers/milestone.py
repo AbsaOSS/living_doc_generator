@@ -7,7 +7,7 @@ class Milestone:
         self.title: Optional[str] = None
         self.html_url: Optional[str] = None
 
-    def load_from_json(self, milestone):
+    def load_from_api_json(self, milestone):
         for key in ["number", "title", "html_url"]:
             if key not in milestone:
                 raise ValueError(f"Milestone key '{key}' is missing in the input dictionary.")

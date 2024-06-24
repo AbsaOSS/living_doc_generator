@@ -70,7 +70,6 @@ class Project(BaseContainer):
         self.title: str = ""
         self.organization_name: str = ""
         self.config_repositories: List[str] = []
-        # TODO: I will have object Project and its repositories. Delete this field
         self.project_repositories: List[str] = []
         self.issues: List[ProjectIssue] = []
         self.field_options: Dict[str, List[str]] = {}
@@ -87,7 +86,7 @@ class Project(BaseContainer):
             'field_options': self.field_options
         }
 
-    def load_from_json(self, gh_project, repository):
+    def load_from_api_json(self, repository, gh_project):
         for key in ["id", "title", "number"]:
             if key not in gh_project:
                 raise ValueError(f"Project key '{key}' is missing in the input dictionary.")
@@ -104,7 +103,7 @@ class Project(BaseContainer):
         self.organization_name = repository.organization_name
         self.config_repositories.append(repository.repository_name)
 
-    def update_field_options(self, session: requests.sessions.Session, repository):
+    def update_field_options(self, repository, session: requests.sessions.Session):
         project_field_options_query = PROJECT_FIELD_OPTIONS_QUERY.format(org_name=repository.organization_name,
                                                                          repo_name=repository.repository_name,
                                                                          project_number=self.number)
@@ -169,3 +168,43 @@ class Project(BaseContainer):
             if repository_name not in attached_repositories:
                 self.project_repositories.append(repository_name)
                 attached_repositories.append(repository_name)
+
+    # TODO: I have to mine also archived issues. Find out how.
+    def update_with_issue_data(self, session: requests.sessions.Session):
+        """
+        Processes the projects and updates their state with the fetched issues.
+        The state of each project includes the issues and the attached repositories.
+
+        @param session: A configured request session.
+
+        @return: The state of all projects as a `project_title: project_state` dictionary.
+        """
+
+        attached_repositories = []
+
+        print(f"Loaded project: `{self.title}`")
+        print(f"Processing issues...")
+
+        # Get issues for project
+        gh_project_issues = self.get_gh_issues(session)
+
+        # Process the issue data and update project state
+        for gh_issue in gh_project_issues:
+            if ('content' in gh_issue and gh_issue['content'] is not None
+                    and gh_issue['content'] != {}):
+                project_issue = ProjectIssue()
+                project_issue.load_from_api_json(gh_issue, self.field_options)
+
+                # Update project with attached repositories
+                repository_name = project_issue.repository_name
+                self.update_attached_repositories(repository_name, attached_repositories)
+
+                # Append the issue to the project
+                # TODO: Check if this is the right way to append the issue to the project, to_dict and back to json
+                subscriptable_project_issue = project_issue.to_dict()
+                self.issues.append(subscriptable_project_issue)
+
+            else:
+                print(f"Warning: 'content' key missing or None in {self.title}'s issue: {gh_issue}")
+
+        print(f"Processed {len(self.issues)} project issues in total for `{self.title}`.")

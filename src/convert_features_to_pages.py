@@ -15,7 +15,7 @@ from datetime import datetime
 from utils import ensure_folder_exists
 from typing import Dict, List, Any
 
-INPUT_FILE = "../data/feature_consolidation/feature.consolidation.json"
+INPUT_FILE = "../data/issue_consolidation/feature.consolidation.json"
 PAGE_TEMPLATE_FILE = "../templates/page_feature_template.md"
 INDEX_PAGE_TEMPLATE_FILE = "../templates/_index_feature_template.md"
 OUTPUT_DIRECTORY_ROOT = "../output/liv-doc"

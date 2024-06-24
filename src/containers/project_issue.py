@@ -27,7 +27,7 @@ class ProjectIssue:
             "moscow": self.moscow
         }
 
-    def load_from_json(self, issue_json, field_options):
+    def load_from_api_json(self, issue_json, field_options):
         issue_content = issue_json['content']
 
         # self.title = issue_content['title']

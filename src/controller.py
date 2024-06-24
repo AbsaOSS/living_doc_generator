@@ -63,10 +63,10 @@ def main():
     run_script('github_query_project_state.py', local_env)
 
     # Consolidate all feature data together
-    run_script('consolidate_feature_data.py', local_env)
+    run_script('consolidate_issue_data.py', local_env)
 
     # Generate markdown pages
-    run_script('convert_features_to_pages.py', local_env)
+    # run_script('convert_features_to_pages.py', local_env)
 
 
 if __name__ == '__main__':

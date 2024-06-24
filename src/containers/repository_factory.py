@@ -8,7 +8,7 @@ class RepositoryFactory:
 
         for repository_json in repositories_json:
             repository = Repository()
-            repository.load_from_json(repository_json)
+            repository.load_from_api_json(repository_json)
             repositories.append(repository)
 
         return repositories

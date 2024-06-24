@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 import requests
 
 from .gh_project import GHProject
 from .base_container import BaseContainer
 from .repository_issue import RepositoryIssue
+from .project import Project
 
 ISSUE_PER_PAGE = 100
 PROJECTS_FROM_REPO_QUERY = """
@@ -25,9 +26,9 @@ class Repository(BaseContainer):
     def __init__(self):
         self.organization_name: str = ""
         self.repository_name: str = ""
-        self.query_labels: List[str] = [None]
+        self.query_labels: List[Optional[str]] = [None]
 
-    def load_from_json(self, repository):
+    def load_from_api_json(self, repository):
         for key in ["orgName", "repoName", "queryLabels"]:
             if key not in repository:
                 raise ValueError(f"Repository key '{key}' is missing in the input dictionary.")
@@ -42,7 +43,7 @@ class Repository(BaseContainer):
         self.repository_name = repository["repoName"]
         self.query_labels = repository["queryLabels"]
 
-    def get_projects(self, session: requests.sessions.Session) -> List[GHProject]:
+    def get_gh_projects(self, session: requests.sessions.Session) -> List[GHProject]:
         """
         Fetches all projects from a repository using GraphQL query.
         If the response is empty, it returns an empty list.
@@ -152,3 +153,38 @@ class Repository(BaseContainer):
         base_endpoint = f"https://api.github.com/search/issues?q={search_query}&per_page={ISSUE_PER_PAGE}"
 
         return base_endpoint
+
+    def get_unique_projects(self, session: requests.sessions.Session, projects_title_filter: str, projects: dict):
+        """
+        Generate a main structure for every unique project.
+        Connects project with the repositories.
+
+        @param projects: The dictionary to store project objects.
+        @param projects_title_filter: The list of project titles to filter.
+        @param session: A configured request session.
+
+        @return: The unique project structure as a dictionary.
+        """
+
+        # Fetch all projects, that are attached to the repo
+        gh_projects = self.get_gh_projects(session)
+
+        # Update unique_projects with main project structure for every project
+        for gh_project in gh_projects:
+            subscriptable_project = gh_project.to_dict()
+            project_id = subscriptable_project["id"]
+            project_title = subscriptable_project["title"]
+
+            is_project_required = (projects_title_filter == '[]') or (project_title in projects_title_filter)
+
+            if is_project_required:
+                if project_id not in projects:
+                    project = Project()
+                    project.load_from_api_json(self, subscriptable_project)
+                    project.update_field_options(self, session)
+
+                    # Primary project structure
+                    projects[project_id] = project
+
+                else:
+                    projects[project_id].config_repositories.append(self.repository_name)

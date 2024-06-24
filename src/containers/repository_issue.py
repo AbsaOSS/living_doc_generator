@@ -38,7 +38,7 @@ class RepositoryIssue:
         self.milestone = Milestone()
 
         if milestone_json is not None:
-            self.milestone.load_from_json(milestone_json)
+            self.milestone.load_from_api_json(milestone_json)
 
         labels = issue_json.get('labels', [])
         self.labels = [label['name'] for label in labels]
@@ -77,26 +77,26 @@ class RepositoryIssue:
             if label == label_name:
                 repository_issues.append(self)
 
-    def load_from_output(self, issue_output):
-        self.number = issue_output["number"]
-        self.title = issue_output["title"]
-        self.state = issue_output["state"]
-        self.url = issue_output["url"]
-        self.body = issue_output["body"]
-        self.created_at = issue_output["created_at"]
-        self.updated_at = issue_output["updated_at"]
-        self.closed_at = issue_output["closed_at"]
-        self.organization_name = issue_output["organization_name"]
-        self.repository_name = issue_output["repository_name"]
+    def load_from_data(self, issue_from_data):
+        self.number = issue_from_data["number"]
+        self.title = issue_from_data["title"]
+        self.state = issue_from_data["state"]
+        self.url = issue_from_data["url"]
+        self.body = issue_from_data["body"]
+        self.created_at = issue_from_data["created_at"]
+        self.updated_at = issue_from_data["updated_at"]
+        self.closed_at = issue_from_data["closed_at"]
+        self.organization_name = issue_from_data["organization_name"]
+        self.repository_name = issue_from_data["repository_name"]
 
-        if "milestone" in issue_output:
+        if "milestone" in issue_from_data:
             self.milestone = Milestone()
-            self.milestone.number = issue_output["milestone_number"]
-            self.milestone.title = issue_output["milestone_title"]
-            self.milestone.html_url = issue_output["milestone_html_url"]
+            self.milestone.number = issue_from_data["milestone_number"]
+            self.milestone.title = issue_from_data["milestone_title"]
+            self.milestone.html_url = issue_from_data["milestone_html_url"]
 
-        self.labels = issue_output["labels"]
-        self.page_filename = issue_output["page_filename"]
+        self.labels = issue_from_data["labels"]
+        self.page_filename = issue_from_data["page_filename"]
 
     # TODO: Candidate for issue parent class
     def make_string_key(self) -> str:
