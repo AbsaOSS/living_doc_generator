@@ -42,14 +42,14 @@ def consolidate_project_issues(repository_issues: List[RepositoryIssue],
 
     consolidated_issues_per_repository = []
 
-    # For each feature, add feature data from project
+    # For every repository issue, add also additional project data
     for repository_issue in repository_issues:
         repository_issue_key = repository_issue.make_string_key()
 
         consolidated_issue = ConsolidatedIssue()
         consolidated_issue.fill_with_repository_issue(repository_issue)
 
-        # Check if key for feature exists also in the project_data_dict
+        # Check if repository issue key exists also in the project issues
         if repository_issue_key in project_issues:
             project_issue = project_issues[repository_issue_key]
             consolidated_issue.update_with_project_data(project_issue, project_title)
@@ -103,7 +103,7 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
                     repository_issue.load_from_data(repository_issue_data)
                     repository_issues.append(repository_issue)
 
-                # Merge feature with additional project data
+                # Merge repository issue with additional project data
                 consolidated_issues_per_repository = consolidate_project_issues(repository_issues,
                                                                                 project_issues, project_title)
                 consolidated_project_issues.extend(consolidated_issues_per_repository)

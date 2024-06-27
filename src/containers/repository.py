@@ -237,7 +237,7 @@ def load_repository_issue_from_data(directory: str, repository_name: str) -> Lis
 
         @return: The feature data as a list of dictionaries.
     """
-    # Load feature data
+    # Load issue data
     # TODO: Make a context attribute for feature, so the method is more generic
     issue_filename = f"{repository_name}.feature.json"
     issue_filename_path = os.path.join(directory, issue_filename).replace("-", "_").lower()
