@@ -17,7 +17,6 @@ from utils import (ensure_folder_exists,
 
 
 OUTPUT_DIRECTORY = "../data/fetched_data/issue_data"
-ISSUE_PER_PAGE = 100
 
 
 def main() -> None:

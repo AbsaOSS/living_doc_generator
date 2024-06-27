@@ -216,12 +216,13 @@ class Repository(BaseContainer):
                 repository_issue = RepositoryIssue()
                 repository_issue.load_from_data(repository_issue_from_data)
 
-                consolidate_issue = ConsolidatedIssue(repository_issue)
+                consolidated_issue = ConsolidatedIssue()
+                consolidated_issue.fill_with_repository_issue(repository_issue)
 
                 if not project_state_mining_switch:
-                    consolidate_issue.no_project_mining()
+                    consolidated_issue.no_project_mining()
 
-                consolidated_issues_without_project.append(consolidate_issue)
+                consolidated_issues_without_project.append(consolidated_issue)
 
         return consolidated_issues_without_project
 

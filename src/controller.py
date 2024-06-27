@@ -66,7 +66,7 @@ def main():
     run_script('consolidate_issue_data.py', local_env)
 
     # Generate markdown pages
-    run_script('convert_features_to_pages.py', local_env)
+    run_script('convert_issues_to_pages.py', local_env)
 
 
 if __name__ == '__main__':

@@ -46,17 +46,18 @@ def consolidate_project_issues(repository_issues: List[RepositoryIssue],
     for repository_issue in repository_issues:
         repository_issue_key = repository_issue.make_string_key()
 
-        consolidate_issue = ConsolidatedIssue(repository_issue)
+        consolidated_issue = ConsolidatedIssue()
+        consolidated_issue.fill_with_repository_issue(repository_issue)
 
         # Check if key for feature exists also in the project_data_dict
         if repository_issue_key in project_issues:
             project_issue = project_issues[repository_issue_key]
-            consolidate_issue.update_with_project_data(project_issue, project_title)
+            consolidated_issue.update_with_project_data(project_issue, project_title)
         else:
             # TODO: Solve this for now, have to find a way to solve archived project issues.
-            consolidate_issue.error = "Not found in project, but expected. This issue is probably archived project issue."
+            consolidated_issue.error = "Not found in project, but expected. This issue is probably archived project issue."
 
-        consolidated_issues_per_repository.append(consolidate_issue)
+        consolidated_issues_per_repository.append(consolidated_issue)
 
     return consolidated_issues_per_repository
 
@@ -91,7 +92,7 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
                 project_issues[string_key] = project_issue
 
             for repository_name in project_json_from_data["config_repositories"]:
-                print(f"Processing project with repository: {repository_name}...")
+                print(f"Processing project `{project_title}` with repository: {repository_name}...")
 
                 repository_issues = []
 

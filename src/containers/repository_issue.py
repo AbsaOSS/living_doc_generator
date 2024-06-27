@@ -89,11 +89,10 @@ class RepositoryIssue:
         self.organization_name = issue_from_data["organization_name"]
         self.repository_name = issue_from_data["repository_name"]
 
-        if "milestone" in issue_from_data:
-            self.milestone = Milestone()
-            self.milestone.number = issue_from_data["milestone_number"]
-            self.milestone.title = issue_from_data["milestone_title"]
-            self.milestone.html_url = issue_from_data["milestone_html_url"]
+        self.milestone = Milestone()
+        self.milestone.number = issue_from_data["milestone_number"]
+        self.milestone.title = issue_from_data["milestone_title"]
+        self.milestone.html_url = issue_from_data["milestone_html_url"]
 
         self.labels = issue_from_data["labels"]
         self.page_filename = issue_from_data["page_filename"]
