@@ -33,10 +33,10 @@ class ConsolidatedIssue:
 
         self.error: Optional[str] = None
 
-    def fill_with_repository_issue(self, repository_issue):
+    def load_repository_issue(self, repository_issue):
         self.number = repository_issue.number
-        self.organization_name = repository_issue.organization_name
-        self.repository_name = repository_issue.repository_name
+        self.organization_name = repository_issue.owner
+        self.repository_name = repository_issue.name
         self.title = repository_issue.title
         self.state = repository_issue.state
         self.url = repository_issue.url
@@ -53,7 +53,7 @@ class ConsolidatedIssue:
         self.labels = list(repository_issue.labels)
         self.page_filename = repository_issue.page_filename
 
-    def update_with_project_data(self, project_issue, project_title):
+    def load_project_issue(self, project_issue, project_title):
         self.linked_to_project = True
         self.project_title = project_title
         self.status = project_issue.status

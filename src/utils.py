@@ -10,6 +10,8 @@ import json
 import requests
 from typing import List
 
+from github_integration.model.issue import Issue
+
 
 def initialize_request_session(github_token: str) -> requests.sessions.Session:
     """
@@ -49,27 +51,26 @@ def ensure_folder_exists(folder_name: str, current_dir: str) -> None:
         print(f"The '{folder_path}' folder has been created.")
 
 
-def save_to_json_file(state_to_save: list, object_type: str, output_directory: str, state_name: str) -> str:
+def save_to_json_file(items_to_save: list, object_type: str, output_directory: str, context_name: str) -> str:
     """
     Saves a list state to a JSON file.
 
-    @param state_to_save: The list to be saved.
+    @param items_to_save: The list to be saved.
     @param object_type: The object type of the state (e.g., 'feature', 'project').
     @param output_directory: The directory, where the file will be saved.
-    @param state_name: The naming of the state.
+    @param context_name: The naming of the state.
 
     @return: The name of the output file.
     """
-    # Prepare the unique saving naming
-    sanitized_name = state_name.lower().replace(" ", "_").replace("-", "_")
+    # Prepare the sanitized filename of the output file
+    sanitized_name = context_name.lower().replace(" ", "_").replace("-", "_")
     output_file_name = f"{sanitized_name}.{object_type}.json"
     output_file_path = f"{output_directory}/{output_file_name}"
 
-    # Save a file with correct output
-    with open(output_file_path, 'w', encoding='utf-'
-                                              '8') as json_file:
+    # Save items to generated output file
+    with open(output_file_path, 'w', encoding='utf-8') as json_file:
         json.dump(
-            state_to_save,
+            items_to_save,
             json_file,
             ensure_ascii=False,
             indent=4)
@@ -77,7 +78,7 @@ def save_to_json_file(state_to_save: list, object_type: str, output_directory: s
     return output_file_name
 
 
-def load_repository_issue_from_data(directory: str, repository_name: str) -> List[dict]:
+def load_repository_issue_from_issue_directory(directory: str, repository_name: str) -> List[dict]:
     """
         Loads feature data from a JSON file located in a specified directory.
 
@@ -93,3 +94,22 @@ def load_repository_issue_from_data(directory: str, repository_name: str) -> Lis
     issue_json_from_data = json.load(open(issue_filename_path))
 
     return issue_json_from_data
+
+
+def issue_to_dict(issue: Issue):
+    return {
+        "number": issue.number,
+        #"organization_name": issue.organization_name,
+        #"repository_name": issue.repository_name,
+        "title": issue.title,
+        "state": issue.state,
+        #"url": issue.url,
+        "body": issue.body,
+        #"created_at": issue.created_at,
+        #"updated_at": issue.updated_at,
+        #"closed_at": issue.closed_at,
+        #"milestone_number": issue.milestone.number,
+        #"milestone_title": issue.milestone.title,
+        #"milestone_html_url": issue.milestone.html_url,
+        "labels": issue.labels
+        }

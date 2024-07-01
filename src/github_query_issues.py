@@ -6,59 +6,62 @@ It queries GitHub's REST API to get issue data and to does process issue data to
 for each unique repository.
 """
 
-import json
 import os
+import logging
 
-from containers.repository import Repository
+from github import Github, Auth
+
+from action.action_inputs import ActionInputs
+from github_integration.github_manager import GithubManager
 
 from utils import (ensure_folder_exists,
-                   initialize_request_session,
-                   save_to_json_file)
+                   save_to_json_file,
+                   issue_to_dict)
 
 
+ISSUES_PER_PAGE_LIMIT = 100
 OUTPUT_DIRECTORY = "../data/fetched_data/issue_data"
 
 
 def main() -> None:
-    print("Script for downloading issues from GitHub API started.")
+    # Configure logging
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    # Get environment variables from the controller script
-    github_token = os.getenv('GITHUB_TOKEN')
-    repositories_env = os.getenv('REPOSITORIES')
+    logging.info("Script for downloading issues from GitHub API started.")
 
-    # Parse repositories JSON string
-    try:
-        repositories_json = json.loads(repositories_env)
-    except json.JSONDecodeError as e:
-        print(f"Error parsing REPOSITORIES: {e}")
-        exit(1)
+    # Load action inputs from the environment
+    action_inputs = ActionInputs().load_from_environment()
 
     # Check if the output directory exists and create it if not
     current_dir = os.path.dirname(os.path.abspath(__file__))
     ensure_folder_exists(OUTPUT_DIRECTORY, current_dir)
 
-    # Initialize the request session
-    session = initialize_request_session(github_token)
+    # Initialize GitHub instance
+    auth = Auth.Token(token=action_inputs.github_token)
+    GithubManager().github = Github(auth=auth, per_page=ISSUES_PER_PAGE_LIMIT)
+    GithubManager().show_rate_limit()
 
-    # Mine issues from every input Repository
-    for repository_json in repositories_json:
-        repository = Repository()
-        repository.load_from_json(repository_json)
+    # Mine issues from every config repository
+    config_repositories = action_inputs.repositories
+    for config_repository in config_repositories:
+        repository_id = f"{config_repository.owner}/{config_repository.name}"
 
-        print(f"Downloading issues from repository `{repository.organization_name}/{repository.repository_name}`.")
+        if GithubManager().fetch_repository(repository_id) is None:
+            return None
 
-        # Load issues from one repository (unique for each repository)
-        loaded_repository_issues = repository.get_issues(session)
+        logging.info(f"Downloading issues from repository `{config_repository.owner}/{config_repository.name}`.")
+
+        # Load all issues from one repository (unique for each repository)
+        issues = GithubManager().fetch_issues(labels=config_repository.query_labels)
 
         # Convert issue objects to dictionaries because they cannot be serialized to JSON directly
-        # TODO: Check if this is the right way to append the issue to the project, json, object, to_dict and back to json
-        issues_to_save = [issue.to_dict() for issue in loaded_repository_issues]
+        issues_to_save = [issue_to_dict(issue) for issue in issues]
 
         # Save issues from one repository as a unique JSON file
-        output_file_name = save_to_json_file(issues_to_save, "feature", OUTPUT_DIRECTORY, repository.repository_name)
-        print(f"Saved {len(issues_to_save)} issues to {output_file_name}.")
+        output_file_name = save_to_json_file(issues_to_save, "feature", OUTPUT_DIRECTORY, config_repository.name)
+        logging.info(f"Saved {len(issues_to_save)} issues to {output_file_name}.")
 
-    print("Script for downloading issues from GitHub API ended.")
+    logging.info("Script for downloading issues from GitHub API ended.")
 
 
 if __name__ == "__main__":

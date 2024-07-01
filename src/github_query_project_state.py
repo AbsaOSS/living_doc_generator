@@ -9,7 +9,8 @@ project output JSON file/s.
 import json
 import os
 
-from containers.repository import Repository
+from containers.repository_old import Repository
+
 from utils import (ensure_folder_exists,
                    initialize_request_session,
                    save_to_json_file)
@@ -53,7 +54,7 @@ def main() -> None:
 
     projects = {}
 
-    # Generate main structure for every unique project, that is attached to any input repository
+    # Generate main project structure for every unique project, that is attached to any input repository
     for repository_json in repositories_json:
         repository = Repository()
         repository.load_from_json(repository_json)

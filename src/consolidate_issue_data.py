@@ -14,11 +14,11 @@ import json
 from typing import List, Dict, Set, Tuple
 from utils import ensure_folder_exists, save_to_json_file
 
-from containers.repository import Repository
+from containers.repository_old import Repository
 from containers.repository_issue import RepositoryIssue
 from containers.project_issue import ProjectIssue
 from containers.consolidated_issue import ConsolidatedIssue
-from utils import load_repository_issue_from_data
+from utils import load_repository_issue_from_issue_directory
 
 REPOSITORY_ISSUE_DIRECTORY = "../data/fetched_data/issue_data"
 PROJECT_ISSUE_DIRECTORY = "../data/fetched_data/project_data"
@@ -47,12 +47,12 @@ def consolidate_project_issues(repository_issues: List[RepositoryIssue],
         repository_issue_key = repository_issue.make_string_key()
 
         consolidated_issue = ConsolidatedIssue()
-        consolidated_issue.fill_with_repository_issue(repository_issue)
+        consolidated_issue.load_repository_issue(repository_issue)
 
         # Check if repository issue key exists also in the project issues
         if repository_issue_key in project_issues:
             project_issue = project_issues[repository_issue_key]
-            consolidated_issue.update_with_project_data(project_issue, project_title)
+            consolidated_issue.load_project_issue(project_issue, project_title)
         else:
             # TODO: Solve this for now, have to find a way to solve archived project issues.
             consolidated_issue.error = "Not found in project, but expected. This issue is probably archived project issue."
@@ -96,7 +96,7 @@ def consolidate_issues_with_project() -> Tuple[List[ConsolidatedIssue], Set[str]
 
                 repository_issues = []
 
-                repository_issues_from_data = load_repository_issue_from_data(REPOSITORY_ISSUE_DIRECTORY, repository_name)
+                repository_issues_from_data = load_repository_issue_from_issue_directory(REPOSITORY_ISSUE_DIRECTORY, repository_name)
 
                 for repository_issue_data in repository_issues_from_data:
                     repository_issue = RepositoryIssue()

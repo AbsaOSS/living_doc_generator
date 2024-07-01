@@ -3,6 +3,7 @@ import requests
 
 from .project_issue import ProjectIssue
 from .base_container import BaseContainer
+from .gh_project import GHProject
 
 ISSUE_PER_PAGE = 100
 ISSUES_FROM_PROJECT_QUERY = """
@@ -86,7 +87,7 @@ class Project(BaseContainer):
             'field_options': self.field_options
         }
 
-    def load_from_api_json(self, repository, gh_project):
+    def load_from_gh_project(self, repository, gh_project: GHProject):
         for key in ["id", "title", "number"]:
             if key not in gh_project:
                 raise ValueError(f"Project key '{key}' is missing in the input dictionary.")
@@ -97,15 +98,15 @@ class Project(BaseContainer):
         if not isinstance(gh_project["number"], int):
             raise ValueError("Project value of 'number' should be of type integer.")
 
-        self.id = gh_project["id"]
-        self.title = gh_project["title"]
-        self.number = gh_project["number"]
-        self.organization_name = repository.organization_name
-        self.config_repositories.append(repository.repository_name)
+        self.id = gh_project.id
+        self.title = gh_project.title
+        self.number = gh_project.number
+        self.organization_name = repository.owner
+        self.config_repositories.append(repository.name)
 
     def update_field_options(self, repository, session: requests.sessions.Session):
-        project_field_options_query = PROJECT_FIELD_OPTIONS_QUERY.format(org_name=repository.organization_name,
-                                                                         repo_name=repository.repository_name,
+        project_field_options_query = PROJECT_FIELD_OPTIONS_QUERY.format(org_name=repository.owner,
+                                                                         repo_name=repository.name,
                                                                          project_number=self.number)
         field_option_response = self.send_graphql_query(project_field_options_query, session)
 

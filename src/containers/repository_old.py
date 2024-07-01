@@ -3,6 +3,8 @@ import requests
 import json
 import os
 
+from typing_extensions import deprecated
+
 from .gh_project import GHProject
 from .base_container import BaseContainer
 from .repository_issue import RepositoryIssue
@@ -26,7 +28,8 @@ PROJECTS_FROM_REPO_QUERY = """
         """
 
 
-class Repository(BaseContainer):
+@deprecated
+class RepositoryOLD(BaseContainer):
     def __init__(self):
         self.organization_name: str = ""
         self.repository_name: str = ""
@@ -77,17 +80,19 @@ class Repository(BaseContainer):
         return gh_projects
 
     def get_issues(self, session: requests.sessions.Session) -> List[RepositoryIssue]:
-        loaded_issues = []
-        issue_numbers = set()
+        repository_issues = []
+        repository_issue_numbers = set()
 
-        # Check if repository query_labels is empty, if so, set it to None to fetch all issues
+        # Check if repository.query_labels are empty, if so, set it to None to fetch all issues
         labels_to_query = self.query_labels if self.query_labels else [None]
 
-        # Fetch issues for all repository query_labels
+        # Fetch issues for every repository query label
         for label_name in labels_to_query:
-            # Base endpoint for fetching label_name or all issues if [] is passed
+            # Generate base endpoint for fetching repository issues
+            # Generate all issues if input repository.labels are not specified
             base_endpoint = self.get_base_endpoint(label_name)
             page = 1
+            issue_counter = 0
 
             try:
                 while True:
@@ -99,9 +104,6 @@ class Repository(BaseContainer):
                     # Check if the request was successful
                     gh_response.raise_for_status()
 
-                    # TODO create small method like filter_issues_by_numbers ==> return instead of []
-                    repository_issues = []
-
                     # Convert json issue to RepositoryIssue object
                     issues_json = gh_response.json()['items']
                     for issue_json in issues_json:
@@ -109,21 +111,22 @@ class Repository(BaseContainer):
                         repository_issue.load_from_json(issue_json, self)
 
                         if label_name is not None:
-                            # Filter out the RepositoryIssues which have label_name only in issue description
-                            repository_issue.filter_out_labels_in_description(label_name, repository_issues)
+                            # For label check, if the label name is in the label section
+                            if repository_issue.has_label_in_label_section(label_name):
+                                # Save unique issues by comparing unique issue numbers
+                                issue_counter = repository_issue.save_unique_issue(repository_issue_numbers,
+                                                                                   repository_issues, issue_counter)
                         else:
-                            repository_issues.append(repository_issue)
+                            # Save unique issues by comparing unique issue numbers
+                            issue_counter = repository_issue.save_unique_issue(repository_issue_numbers,
+                                                                               repository_issues, issue_counter)
 
-                        if repository_issue.number not in issue_numbers:
-                            loaded_issues.append(repository_issue)
-                            issue_numbers.add(repository_issue.number)
-
-                    # Logging the number of loaded issues
+                    # Logging the number of loaded unique issues
                     # TODO: Logic for printing will be removed, due to logging refactoring later
                     if label_name is None:
-                        print(f"Loaded {len(repository_issues)} issues.")
+                        print(f"Loaded {issue_counter} issues.")
                     else:
-                        print(f"Loaded {len(repository_issues)} issues for label `{label_name}`.")
+                        print(f"Loaded {issue_counter} issues for label `{label_name}`.")
 
                     # If we retrieved less than issue_per_page constant, it means we're on the last page
                     if len(issues_json) < ISSUE_PER_PAGE:
@@ -138,7 +141,7 @@ class Repository(BaseContainer):
                 print(f"An error occurred: {e}")
                 break
 
-        return loaded_issues
+        return repository_issues
 
     def get_base_endpoint(self, label_name: str) -> str:
         """
@@ -149,11 +152,14 @@ class Repository(BaseContainer):
 
         @return: The base endpoint for fetching issues.
         """
+        # If label_name is not specified, fetch all issues
         if label_name is None:
             search_query = f"repo:{self.organization_name}/{self.repository_name} is:issue"
         else:
+            # If label_name is specified, fetch issues with the label
             search_query = f"repo:{self.organization_name}/{self.repository_name} is:issue label:{label_name}"
 
+        # Finalize the base endpoint for fetching repository issue with involved pagination
         base_endpoint = f"https://api.github.com/search/issues?q={search_query}&per_page={ISSUE_PER_PAGE}"
 
         return base_endpoint
@@ -175,16 +181,15 @@ class Repository(BaseContainer):
 
         # Update unique_projects with main project structure for every project
         for gh_project in gh_projects:
-            subscriptable_project = gh_project.to_dict()
-            project_id = subscriptable_project["id"]
-            project_title = subscriptable_project["title"]
+            project_id = gh_project.id
+            project_title = gh_project.title
 
             is_project_required = (projects_title_filter == '[]') or (project_title in projects_title_filter)
 
             if is_project_required:
                 if project_id not in projects:
                     project = Project()
-                    project.load_from_api_json(self, subscriptable_project)
+                    project.load_from_gh_project(self, gh_project)
                     project.update_field_options(self, session)
 
                     # Primary project structure
@@ -217,7 +222,7 @@ class Repository(BaseContainer):
                 repository_issue.load_from_data(repository_issue_from_data)
 
                 consolidated_issue = ConsolidatedIssue()
-                consolidated_issue.fill_with_repository_issue(repository_issue)
+                consolidated_issue.load_repository_issue(repository_issue)
 
                 if not project_state_mining_switch:
                     consolidated_issue.no_project_mining()

@@ -1,9 +1,12 @@
 import re
-from typing import List, Optional
+from typing import List, Set, Optional
+
+from typing_extensions import deprecated
 
 from .milestone import Milestone
 
 
+@deprecated
 class RepositoryIssue:
     def __init__(self):
         self.number: int = 0
@@ -21,10 +24,12 @@ class RepositoryIssue:
         self.page_filename: str = ""
 
     def load_from_json(self, issue_json, repository):
+        # TODO: Documentary string
         # TODO: is possible to remove load and save from and to json, so it is json native
+        # Load object attributes from JSON
         self.number = issue_json["number"]
-        self.organization_name = repository.organization_name
-        self.repository_name = repository.repository_name
+        self.organization_name = repository.owner
+        self.repository_name = repository.name
         self.title = issue_json["title"]
         self.state = issue_json["state"]
         self.url = issue_json["html_url"]
@@ -37,12 +42,16 @@ class RepositoryIssue:
         milestone_json = issue_json['milestone']
         self.milestone = Milestone()
 
+        # Load milestone attributes from JSON
         if milestone_json is not None:
             self.milestone.load_from_api_json(milestone_json)
 
+        # Load label names from JSON
         labels = issue_json.get('labels', [])
         self.labels = [label['name'] for label in labels]
 
+        # Prepare the filename for the issue summary page
+        # TODO: don't have to store this, because we don't need it for now
         md_filename_base = f"{self.number}_{self.title.lower()}.md"
         self.page_filename = self.sanitize_filename(md_filename_base)
 
@@ -65,17 +74,18 @@ class RepositoryIssue:
             "page_filename": self.page_filename
         }
 
-    def filter_out_labels_in_description(self, label_name: str, repository_issues: List['RepositoryIssue']):
+    def has_label_in_label_section(self, label_name: str) -> bool:
         """
         Filter out the RepositoryIssues which have label_name only in issue description and append
         them into issues
 
         @param label_name: The name of the label.
-        @param repository_issues: The list of fetched issues.
         """
         for label in self.labels:
             if label == label_name:
-                repository_issues.append(self)
+                return True
+
+        return False
 
     def load_from_data(self, issue_from_data):
         self.number = issue_from_data["number"]
@@ -108,6 +118,14 @@ class RepositoryIssue:
         string_key = f"{self.organization_name}/{self.repository_name}/{self.number}"
 
         return string_key
+
+    def save_unique_issue(self, repository_issue_numbers: Set[int], repository_issues: List['RepositoryIssue'], issue_counter: int):
+        if self.number not in repository_issue_numbers:
+            repository_issue_numbers.add(self.number)
+            repository_issues.append(self)
+            issue_counter += 1
+
+        return issue_counter
 
     @staticmethod
     def sanitize_filename(filename: str) -> str:
