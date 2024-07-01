@@ -13,6 +13,7 @@ def extract_args():
     parser.add_argument('--projects-title-filter', required=True, help='Filter projects by titles. Provide a list of project titles.')
     parser.add_argument('--milestones-as-chapters', required=True, help='Treat milestones as chapters in the generated documentation.')
     parser.add_argument('--repositories', required=True, help='JSON string defining the repositories to be included in the documentation generation.')
+    parser.add_argument('--output-directory', type=str, required=False, default='../output', help='Output directory, which stores the generated documentation.')
 
     args = parser.parse_args()
 
@@ -22,9 +23,7 @@ def extract_args():
         'PROJECTS_TITLE_FILTER': args.projects_title_filter,
         'MILESTONES_AS_CHAPTERS': args.milestones_as_chapters,
         'REPOSITORIES': args.repositories,
-        'FETCH_DIRECTORY': "src/data/fetched_data",
-        'CONSOLIDATION_DIRECTORY': "src/data/consolidation_data",
-        'MARKDOWN_PAGE_DIRECTORY': "src/output/markdown_pages"
+        'OUTPUT_DIRECTORY': args.output_directory
     }
 
     return env_vars
@@ -64,10 +63,10 @@ def main():
     run_script('github_query_project_state.py', local_env)
 
     # Consolidate all feature data together
-    run_script('consolidate_feature_data.py', local_env)
+    run_script('consolidate_issue_data.py', local_env)
 
     # Generate markdown pages
-    run_script('convert_features_to_pages.py', local_env)
+    run_script('convert_issues_to_pages.py', local_env)
 
 
 if __name__ == '__main__':

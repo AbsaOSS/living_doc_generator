@@ -10,6 +10,8 @@ The script can be run from the command line:
 import os
 import shutil
 
+DATA_DIRECTORY = "../data"
+
 
 def clean_directory_content(script_dir: str, directory: str) -> None:
     """
@@ -31,26 +33,21 @@ def clean_directory_content(script_dir: str, directory: str) -> None:
         shutil.rmtree(directory_path)
 
 
-def clean_environment():
+def main() -> None:
     print("Cleaning environment for the Living Doc Generator")
 
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Get the directory variables from the environment variables
-    fetch_directory = os.environ['FETCH_DIRECTORY']
-    consolidation_directory = os.environ['CONSOLIDATION_DIRECTORY']
-    markdown_page_directory = os.environ['MARKDOWN_PAGE_DIRECTORY']
+    # Get output directory from the env variables
+    output_directory = os.environ['OUTPUT_DIRECTORY']
 
-    # Clean the fetched data directories
-    clean_directory_content(script_dir, fetch_directory)
-    clean_directory_content(script_dir, consolidation_directory)
+    # Clean the directory content for generated data and output
+    clean_directory_content(script_dir, DATA_DIRECTORY)
+    clean_directory_content(script_dir, output_directory)
 
-    # Clean the output directory
-    clean_directory_content(script_dir, markdown_page_directory)
-
-    print("Cleaning of env for Living Documentation ended")
+    print("Cleaning environment for Living Documentation ended")
 
 
 if __name__ == "__main__":
-    clean_environment()
+    main()
